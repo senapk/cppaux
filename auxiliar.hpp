@@ -26,7 +26,15 @@ namespace aux {
     // aplica a função fn em cada elemento do container
     // retorna um vector com os elementos resultantes da função
     auto map(const auto& container, auto fn) {
-        return map_filter(container, fn, [](auto& x){ return true; });
+        return map_filter(container, fn, [](auto& x){ (void) x; return true; });
+    }
+
+    auto get_keys(const auto& container) {
+        return map(container, fn_map_keys);
+    }
+
+    auto get_values(const auto& container) {
+        return map(container, fn_map_values);
     }
 
     // recebe um vector ou um list e retorna um novo container apenas com os elementos
@@ -58,9 +66,13 @@ namespace aux {
         return join(container, delimiter, [](auto& x){ return x; });
     }
 
-    // formats a vector to a string [v0, v1, v2, v3]
-    template <typename T>
-    std::string format(const std::vector<T>& container) {
+    // junta todos os elementos de um container de ponteiros para objeto
+    auto join_ptr(const auto& container, const std::string& delimiter) {
+        return join(container, delimiter, fn_ptr);
+    }
+
+    // formats a container to a string [v0, v1, v2, v3]
+    std::string format(const auto& container) {
         std::stringstream ss;
         ss << "[" << join(container, ", ") << "]";
         return ss.str();
