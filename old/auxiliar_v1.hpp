@@ -6,15 +6,21 @@
 #include <functional>
 #include <map>
 
+
+#define slambda(x_fn) [](auto& x){ return x_fn; }
+
 namespace aux {
 
-    auto fn_identity = [](auto& x) { return x; };
-    auto fn_ptr = [](auto& x) { return *x; };
-    auto fn_map_keys = [](auto& pair) { return pair.first; };
-    auto fn_map_values = [](auto& pair) { return pair.second; };
-    auto fn_map_values_ptr = [](auto& pair) {return *pair.second; };
+    auto fn_identity = slambda(x);
+    //dereferencing
+    auto fn_deref = slambda(*x);
+    auto fn_pair_key = slambda(x.first);
+    auto fn_pair_value = slambda(x.second);
+    //dereferencing value of the pair
+    auto fn_pair_value_deref = slambda(*x.second);
 
-    auto map_filter(const auto& container, auto fn, auto predicate) {
+    //retorna um vector com a transformaçao de cada elemento que passou no predicado
+    auto map_filter(const auto& container, auto predicate, auto fn) {
         using output_type = decltype(fn(*container.begin()));
         std::vector<output_type> result;
         for (const auto& item : container)
@@ -26,22 +32,14 @@ namespace aux {
     // aplica a função fn em cada elemento do container
     // retorna um vector com os elementos resultantes da função
     auto map(const auto& container, auto fn) {
-        return map_filter(container, fn, [](auto& x){ (void) x; return true; });
-    }
-
-    auto get_keys(const auto& container) {
-        return map(container, fn_map_keys);
-    }
-
-    auto get_values(const auto& container) {
-        return map(container, fn_map_values);
+        return map_filter(container, [](auto& x){ (void) x; return true;}, fn);
     }
 
     // recebe um vector ou um list e retorna um novo container apenas com os elementos
     // que satisfazem o predicado
     template <typename T>
     T filter(const T& container, auto predicate) {
-        return map_filter(container, aux::fn_identity, predicate);
+        return map_filter(container, predicate, aux::fn_identity);
     }
 
     // aplica a função fn sobre cada elemento do container
@@ -63,12 +61,12 @@ namespace aux {
     // join({"a", "b", "c"}, ",") -> "a,b,c"
     // join(std::vector<int>{1, 2, 3}, ",") -> "1,2,3"
     auto join(const auto& container, const std::string& delimiter) {
-        return join(container, delimiter, [](auto& x){ return x; });
+        return join(container, delimiter, fn_identity);
     }
 
     // junta todos os elementos de um container de ponteiros para objeto
-    auto join_ptr(const auto& container, const std::string& delimiter) {
-        return join(container, delimiter, fn_ptr);
+    auto join_deref(const auto& container, const std::string& delimiter) {
+        return join(container, delimiter, fn_deref);
     }
 
     // formats a container to a string [v0, v1, v2, v3]
@@ -182,5 +180,20 @@ namespace aux {
         K k;
         ss >> k;
         return k;
+    }
+
+    std::vector<std::string> getcmd() {
+        static bool echo { true };
+        std::string line;
+        if (!echo)
+            std::cout << "$";
+        std::getline(std::cin, line);
+        if (line == "echo") {
+            echo = !echo;
+            return {};
+        }
+        if (echo)
+            std::cout << "$" << line << "\n";
+        return aux::split(line, ' ');
     }
 }

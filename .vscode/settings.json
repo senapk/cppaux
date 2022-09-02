@@ -65,6 +65,11 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "codecvt": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "cfenv": "cpp",
+        "hash_set": "cpp"
     }
 }
