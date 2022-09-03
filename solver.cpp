@@ -3,7 +3,6 @@
 // #include "auxiliar.hpp"
 #include <vector>
 
-
 #include "aux.hpp"
 
 using namespace aux;

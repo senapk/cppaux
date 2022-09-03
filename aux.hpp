@@ -77,7 +77,7 @@ namespace aux {
         return result;
     }
 
-    // splits a line in a vector of strings using delimiter ignoring empty strings
+    // splits a line in a vector of strings using delimiter
     std::vector<std::string> split(const std::string& line, char delimiter) {
         std::istringstream is(line);
         std::vector<std::string> output;
@@ -162,4 +162,40 @@ namespace aux {
         return show;
     }
 
+    //---------------------------------------------------------------
+    //---------------------------------------------------------------
+    //---------------------------------------------------------------
+
+
+    using Chain = std::map<std::string, std::function<void()>>;
+    using Param = std::vector<std::string>;
+
+    void __shell(Chain& chain, Param& ui, bool on_moodle) {
+        while(true) {
+            std::string line{}, cmd{};
+            if (!on_moodle)
+                std::cout << "$";
+            std::getline(std::cin, line);
+            std::stringstream ss(line);
+            ss >> cmd;
+            ui = aux::split(line, ' ');
+            if (on_moodle)
+                std::cout << "$" << line << '\n';
+            if (cmd == "end") {
+                break;
+            } else if (chain.count(cmd) != 0) {
+                chain[cmd]();
+            } else {
+                std::cout << "fail: command not found\n";
+            }
+        }
+    }
+
+    void shell(Chain& chain, Param& ui) {
+        __shell(chain, ui, false);
+    }
+
+    void execute(Chain& chain, Param& ui) {
+        __shell(chain, ui, true);
+    }
 }

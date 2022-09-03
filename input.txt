@@ -1,0 +1,5 @@
+soma 3 4
+soma 1 5
+double 5
+sub 1 6
+end
