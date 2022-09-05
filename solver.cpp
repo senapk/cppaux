@@ -43,21 +43,7 @@ void test_fmt() {
     show << (fmt(std::vector<Pessoa>{{"ana", 1}, {"julia", 2}}) == "[ana:1,julia:2]");
 }
 
-void test_to() {
-    show << (to<int>("1") == 1);
-    show << (to<double>("1.2432423") == 1.2432423);
-    show << (to<bool>("true") == true);
-    show << (to<bool>("false") == false); //qualquer coisa diferente de "true" é false
-}
 
-void test_to_vet() {
-    //o to_vet usa o separador default do ',' 
-    auto vet = to_vet<int>("[1,2,3,4]");
-    show << vet; 
-
-    //passando o separador como -
-    show << fmt(to_vet<Pessoa>("[ana:1-julia:2]", '-'), ", "); //[ana:1, julia:2]
-}
 
 void test_join() {
     auto vet = std::vector<Pessoa>{{"ana", 1}, {"julia", 2}, {"fca", 4}};
@@ -79,6 +65,8 @@ void test_clist() {
     show << fmt(nomes);
 }
 
+
+
 //os nomes de quem tem mais de 2 anos
 void test_clist2() {
     std::vector<Pessoa> vet {{"bel", 7}, {"ana", 1}, {"julia", 2}, {"fca", 4}};
@@ -92,6 +80,7 @@ void test_clist3() {
     std::vector<Pessoa> vet {{"bel", 7}, {"ana", 1}, {"julia", 2}, {"fca", 4}};
     auto pessoas = clist(IDX, vet, FX(x.nome[0] < 'c'));
     show << fmt(pessoas);
+    show << vet;
 }
 
 //os nomes a partir de um vetor de ponteiros
@@ -106,6 +95,16 @@ void test_to_vet2() {
     show << vint("[1,2,3,4]");
 }
 
+void test_vet_pair() {
+    auto vet = std::vector<std::pair<int, int>>{{1,2}, {3,4}, {5,6}};
+    show << vet;
+}
+
+void test_vet_pessoas() {
+    std::vector<Pessoa> vet {{"bel", 7}, {"ana", 1}, {"julia", 2}, {"fca", 4}};
+    show << vet;
+}
+
 int main() {
     test_fmt();
     test_to();
@@ -116,6 +115,8 @@ int main() {
     test_clist3();
     test_clist4();
     test_to_vet2();
+    test_vet_pair();
+    test_vet_pessoas();
 
     show << std::vector<int>{1, 2, 3, 4};
 }

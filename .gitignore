@@ -1,1 +1,4 @@
 *.out
+old
+test_*
+*.cpp
