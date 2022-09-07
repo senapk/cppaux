@@ -59,5 +59,6 @@ namespace aux {
         std::cout << fmt(data) << '\n';
         return show;
     }
+
 }
 
