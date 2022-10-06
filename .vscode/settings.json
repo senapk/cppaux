@@ -70,6 +70,9 @@
         "ranges": "cpp",
         "span": "cpp",
         "cfenv": "cpp",
-        "hash_set": "cpp"
+        "hash_set": "cpp",
+        "complex": "cpp",
+        "bitset": "cpp",
+        "typeindex": "cpp"
     }
 }
