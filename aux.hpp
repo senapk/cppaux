@@ -153,6 +153,7 @@ namespace aux {
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #define FX(FX) []([[maybe_unused]] auto x) { return FX; }
 
@@ -297,8 +298,8 @@ std::string operator|(CONTAINER&& container, JOIN join) {
         ss << join.delimiter << item;
     return ss.str().substr(join.delimiter.size());
 }
-//-------------------------------------------------
 
+//-------------------------------------------------
 struct FMT {
     std::string delimiter;
     std::string prefix;
@@ -451,6 +452,34 @@ auto operator|(CONTAINER container, ZIP<CONTAINER2> zip){
     }
     return aux;
 };
+
+//-------------------------------------------------
+
+struct STREAM {
+};
+
+struct COLLECT {
+};
+
+using stream = std::unique_ptr<std::stringstream>;
+
+template <typename DATA>
+stream operator|(STREAM, DATA data) {
+    stream ss = std::make_unique<std::stringstream>();
+    *ss << data;
+    return ss;
+}
+
+template <typename DATA>
+stream operator|(stream ss, DATA data) {
+    *ss << data;
+    return ss;
+}
+
+std::string operator|(stream ss, COLLECT) {
+    std::string out = ss->str();
+    return out;
+}
 
 } // namespace aux
 
