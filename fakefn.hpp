@@ -307,30 +307,23 @@ auto operator|(CONTAINER container, ZIP<CONTAINER2> zip){
 //-------------------------------------------------
 
 struct STREAM {
+    std::unique_ptr<std::stringstream> ss;
+    STREAM() : ss(std::make_unique<std::stringstream>()) {}
 };
 
 struct COLLECT {
 };
 
-using stream = std::unique_ptr<std::stringstream>;
-
 template <typename DATA>
-stream operator|(STREAM, DATA data) {
-    stream ss = std::make_unique<std::stringstream>();
-    *ss << data;
-    return ss;
+STREAM operator|(STREAM stream, DATA data) {
+    *stream.ss << data;
+    return stream;
 }
 
-template <typename DATA>
-stream operator|(stream ss, DATA data) {
-    *ss << data;
-    return ss;
+std::string operator|(STREAM stream, COLLECT) {
+    return stream.ss->str();
 }
 
-std::string operator|(stream ss, COLLECT) {
-    std::string out = ss->str();
-    return out;
-}
 
 } // namespace aux
 
