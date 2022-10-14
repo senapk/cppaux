@@ -155,7 +155,7 @@ namespace aux {
 #include <algorithm>
 #include <memory>
 
-#define FX(FX) []([[maybe_unused]] auto x) { return FX; }
+#define LAMBDA(x, fx) []([[maybe_unused]] auto x){ return fx; }
 
 namespace aux {
 //-------------------------------------------------
