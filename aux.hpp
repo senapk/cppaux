@@ -5,159 +5,14 @@
 #include <map>
 #include <vector>
 #include <functional>
-
-namespace aux {
-    using Chain = std::map<std::string, std::function<void()>>;
-    using Param = std::vector<std::string>;
-
-    std::vector<std::string> __split(const std::string& line, char delimiter) {
-        std::istringstream is(line);
-        std::vector<std::string> output;
-        std::string token;
-        while(std::getline(is, token, delimiter))
-            output.push_back(token);
-        return output;
-    };
-
-    void __action(Chain& chain, Param& ui, bool on_moodle) {
-        while(true) {
-            std::string line{}, cmd{};
-            if (!on_moodle)
-                std::cout << "$";
-            std::getline(std::cin, line);
-            std::stringstream ss(line);
-            ss >> cmd;
-            ui = __split(line, ' ');
-            if (on_moodle)
-                std::cout << "$" << line << '\n';
-            if (cmd == "end") {
-                break;
-            } else if (chain.count(cmd) != 0) {
-                try {
-                    chain[cmd]();
-                } catch (std::string& e) {
-                    std::cout << e << '\n';
-                }
-            } else {
-                std::cout << "fail: command not found\n";
-            }
-        }
-    }
-
-    void shell(Chain& chain, Param& ui) {
-        __action(chain, ui, false);
-    }
-
-    void execute(Chain& chain, Param& ui) {
-        __action(chain, ui, true);
-    }
-}
-
-#pragma once
-
-#include <iostream> //string
-#include <sstream>  //stringstream
-#include <vector>   //vector
-#include <iomanip>  //setprecision
-#include <functional>
-
-namespace aux {
-
-    template<typename T>
-    std::string fmt(T value) {
-        std::stringstream ss;
-        ss << value;
-        return ss.str();
-    }
-
-    template <>
-    std::string fmt(bool value) {
-        return value ? "true" : "false";
-    }
-
-    template <>
-    std::string fmt(double value) {
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(2) << value;
-        return ss.str();
-    }
-
-    template <>
-    std::string fmt(float value) {
-        return fmt((double) value);
-    }
-
-    template <typename K, typename T>
-    std::string fmt(std::pair<K,T> value) {
-        return fmt(value.first) + ":" + fmt(value.second);
-    }
-
-    template <class T>
-    std::string fmt(std::vector<T> vet, std::string sep = ", ") {
-        std::string prefix = "[";
-        std::string suffix = "]";
-        if(vet.size() == 0)
-            return prefix + suffix;
-        std::stringstream ss;
-        for (const auto& item : vet)
-            ss << sep << fmt(item);
-        return prefix + ss.str().substr(sep.size()) + suffix;
-    }
-
-    struct Show {
-    };
-
-    Show show;
-
-    template <class T>
-    Show& operator<<(Show& show, T&& data) {
-        std::cout << fmt(data) << '\n';
-        return show;
-    }
-
-}
-
-#pragma once
-
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-namespace aux {
-    template <class T>
-    T to(std::string data) {
-        T value;
-        std::stringstream(data) >> value;
-        return value;
-    }
-
-    template <>
-    bool to(std::string data) {
-        return data == "true";
-    }
-
-    template <class T>
-    std::vector<T> to_vet(std::string data, char delimiter = ',') {
-        std::istringstream is(data.substr(1, data.size() - 2));
-        std::vector<T> output;
-        std::string token;
-        while(std::getline(is, token, delimiter))
-            output.push_back(aux::to<T>(token));
-        return output;
-    }
-}
-
-#pragma once
-
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <algorithm>
 #include <memory>
 
-#define LAMBDA(x, fx) []([[maybe_unused]] auto x){ return fx; }
-
 namespace aux {
+
+//-------------------------------------------------
+
+#define LAMBDA(escopo, x, fx) [escopo](auto x){ return fx; }
+
 //-------------------------------------------------
 
 std::vector<int> IOTA(int init, int end, int step = 1) {
@@ -271,6 +126,83 @@ auto operator|(CONTAINER&& container, MAP<LAMBDA> map){
     std::transform(container.begin(), container.end(), std::back_inserter(aux), map.fn);
     return aux;
 };
+
+//-------------------------------------------------
+struct SPLIT {
+    char delimiter;
+    SPLIT(char delimiter) : delimiter(delimiter) {}
+};
+
+std::vector<std::string> operator|(std::string str, SPLIT split) {
+    std::vector<std::string> aux;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, split.delimiter))
+        aux.push_back(token);
+    return aux;
+}
+
+//-------------------------------------------------
+template <typename T>
+struct STR2 {
+};
+
+template <typename T>
+T operator|(std::string value, STR2<T>) {
+    std::istringstream iss(value);
+    T aux;
+    if (iss >> aux) {
+        return aux;
+    }
+    std::cout << "fail: conversão de \"" << value << "\" " << std::endl;
+    return aux;
+}
+
+//-------------------------------------------------
+
+template <typename... Args>
+struct TUPLEFY {
+    char delimiter;
+    TUPLEFY(char delimiter) : delimiter(delimiter) {}
+};
+
+template <typename... Args>
+auto operator|(const std::string& line, TUPLEFY<Args...> parse) {
+    std::istringstream is(line);
+    std::tuple<Args...> t;
+
+    auto get_token = [] (std::istream& is, char delimiter, auto& value) {
+        std::string line;
+        std::getline(is, line, delimiter);
+        std::istringstream ss(line);
+        ss >> value;
+    };
+
+    std::apply(
+        [&is, &parse, get_token](auto&&... args) {
+            ((get_token(is, parse.delimiter, args)), ...);
+        },t);
+    return t;
+}
+
+//-------------------------------------------------
+struct STR {
+    std::string action;
+    STR(std::string action = "") : action(action) {}
+};
+
+template<typename DATA>
+std::string operator|(DATA data, STR fmt) {
+    if (fmt.action == "") {
+        std::ostringstream oss;
+        oss << data;
+        return oss.str();
+    }
+    char buffer[1000];
+    sprintf(buffer, fmt.action.c_str(), data);
+    return std::string(buffer);
+}
+
 //-------------------------------------------------
 
 struct PRINT {
@@ -471,6 +403,43 @@ STREAM operator|(STREAM stream, DATA data) {
 
 std::string operator|(STREAM stream, COLLECT) {
     return stream.ss->str();
+}
+
+
+using Chain = std::map<std::string, std::function<void()>>;
+using Param = std::vector<std::string>;
+
+void __action(Chain& chain, Param& ui, bool on_moodle) {
+    while(true) {
+        std::string line{}, cmd{};
+        if (!on_moodle)
+            std::cout << "$";
+        std::getline(std::cin, line);
+        std::stringstream ss(line);
+        ss >> cmd;
+        ui = line | SPLIT(' ');
+        if (on_moodle)
+            std::cout << "$" << line << '\n';
+        if (cmd == "end") {
+            break;
+        } else if (chain.count(cmd) != 0) {
+            try {
+                chain[cmd]();
+            } catch (std::string& e) {
+                std::cout << e << '\n';
+            }
+        } else {
+            std::cout << "fail: command not found\n";
+        }
+    }
+}
+
+void shell(Chain& chain, Param& ui) {
+    __action(chain, ui, false);
+}
+
+void execute(Chain& chain, Param& ui) {
+    __action(chain, ui, true);
 }
 
 
