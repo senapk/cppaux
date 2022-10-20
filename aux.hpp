@@ -11,7 +11,7 @@ namespace aux {
 
 //-------------------------------------------------
 
-#define LAMBDA(escopo, x, fx) [escopo](auto x){ return fx; }
+#define LAMBDA(x, fx) []([[maybe_unused]] auto x){ return fx; }
 
 //-------------------------------------------------
 
@@ -20,6 +20,24 @@ std::vector<int> IOTA(int init, int end, int step = 1) {
     for (int i = init; i < end; i += step)
         aux.push_back(i);
     return aux;
+}
+
+//-------------------------------------------------
+
+
+struct JOIN {
+    std::string delimiter;
+    JOIN(std::string delimiter = ", ") : delimiter(delimiter) {}
+};
+
+template <class CONTAINER>
+std::string operator|(CONTAINER&& container, JOIN join) {
+    if(container.size() == 0)
+        return "";
+    std::ostringstream ss;
+    for (const auto& item : container)
+        ss << join.delimiter << item;
+    return ss.str().substr(join.delimiter.size());
 }
 
 //-------------------------------------------------
@@ -78,6 +96,12 @@ auto operator|(CONTAINER&& container, COPY copy) {
     std::copy(container.begin() + begin, container.begin() + end, std::back_inserter(aux));
     return aux;
 }
+
+std::string operator|(std::string data, COPY copy) {
+    std::vector<char> vet(data.begin(), data.end());
+    return vet | copy | JOIN("");
+}
+
 //-------------------------------------------------
 struct TAKE {
     int n;
@@ -145,17 +169,20 @@ std::vector<std::string> operator|(std::string str, SPLIT split) {
 //-------------------------------------------------
 template <typename T>
 struct STR2 {
+    T operator()(std::string value) {
+        std::istringstream iss(value);
+        T aux;
+        if (iss >> aux) {
+            return aux;
+        }
+        std::cout << "fail: conversão de \"" << value << "\" " << std::endl;
+        return aux;
+    }
 };
 
 template <typename T>
-T operator|(std::string value, STR2<T>) {
-    std::istringstream iss(value);
-    T aux;
-    if (iss >> aux) {
-        return aux;
-    }
-    std::cout << "fail: conversão de \"" << value << "\" " << std::endl;
-    return aux;
+T operator|(std::string value, STR2<T> str2) {
+    return str2(value);
 }
 
 //-------------------------------------------------
@@ -214,22 +241,6 @@ template<typename DATA>
 void operator|(DATA&& data, PRINT print) {
     std::cout << data << print.end;
 }
-//-------------------------------------------------
-
-struct JOIN {
-    std::string delimiter;
-    JOIN(std::string delimiter = ", ") : delimiter(delimiter) {}
-};
-
-template <class CONTAINER>
-std::string operator|(CONTAINER&& container, JOIN join) {
-    if(container.size() == 0)
-        return "";
-    std::ostringstream ss;
-    for (const auto& item : container)
-        ss << join.delimiter << item;
-    return ss.str().substr(join.delimiter.size());
-}
 
 //-------------------------------------------------
 struct FMT {
@@ -251,7 +262,7 @@ struct KEYS {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, [[maybe_unused]] KEYS keys){
+auto operator|(CONTAINER&& container, KEYS){
     return container | MAP([](auto x) { return x.first; });
 };
 
@@ -261,7 +272,7 @@ struct VALUES {
     VALUES() {}
 };
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, [[maybe_unused]] VALUES values){
+auto operator|(CONTAINER&& container, VALUES){
     return container | MAP([](auto x) { return x.second; });
 };
 
@@ -386,6 +397,18 @@ auto operator|(CONTAINER container, ZIP<CONTAINER2> zip){
 };
 
 //-------------------------------------------------
+template<typename LAMBDA>
+struct PIPE {
+    LAMBDA fn;
+    PIPE(LAMBDA fn) : fn(fn) {}
+};
+
+template<typename T, typename LAMBDA>
+auto operator|(T data, PIPE<LAMBDA> pipe) {
+    return pipe.fn(data);
+}
+
+//-------------------------------------------------
 
 struct STREAM {
     std::unique_ptr<std::stringstream> ss;
@@ -405,21 +428,17 @@ std::string operator|(STREAM stream, COLLECT) {
     return stream.ss->str();
 }
 
-
 using Chain = std::map<std::string, std::function<void()>>;
 using Param = std::vector<std::string>;
 
-void __action(Chain& chain, Param& ui, bool on_moodle) {
+void execute(Chain& chain, Param& ui) {
     while(true) {
         std::string line{}, cmd{};
-        if (!on_moodle)
-            std::cout << "$";
         std::getline(std::cin, line);
         std::stringstream ss(line);
         ss >> cmd;
         ui = line | SPLIT(' ');
-        if (on_moodle)
-            std::cout << "$" << line << '\n';
+        std::cout << "$" << line << '\n';
         if (cmd == "end") {
             break;
         } else if (chain.count(cmd) != 0) {
@@ -434,13 +453,6 @@ void __action(Chain& chain, Param& ui, bool on_moodle) {
     }
 }
 
-void shell(Chain& chain, Param& ui) {
-    __action(chain, ui, false);
-}
-
-void execute(Chain& chain, Param& ui) {
-    __action(chain, ui, true);
-}
 
 
 } // namespace aux
