@@ -11,7 +11,8 @@ namespace aux {
 
 //-------------------------------------------------
 
-#define LAMBDA(x, fx) []([[maybe_unused]] auto x){ return fx; }
+#define LAMBDA(x, fx) [](auto x){ return fx; }
+#define LAMBDAE(escopo, x, fx) [escopo](auto x){ return fx; }
 
 //-------------------------------------------------
 
@@ -31,7 +32,7 @@ struct JOIN {
 };
 
 template <class CONTAINER>
-std::string operator|(CONTAINER&& container, JOIN join) {
+std::string operator|(CONTAINER container, JOIN join) {
     if(container.size() == 0)
         return "";
     std::ostringstream ss;
@@ -45,7 +46,7 @@ struct NEWVET {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, NEWVET) {
+auto operator|(CONTAINER container, NEWVET) {
     auto fn = [](auto x) {return x;}; 
     std::vector<decltype(fn(*container.begin()))> aux;
     return aux;
@@ -75,7 +76,7 @@ struct COPY {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, COPY copy) {
+auto operator|(CONTAINER container, COPY copy) {
     auto aux = container | NEWVET();
     int size = container.size();
     int begin = 0;
@@ -108,7 +109,7 @@ struct TAKE {
     TAKE(int n): n(n) {}
 };
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, TAKE take){
+auto operator|(CONTAINER container, TAKE take){
     return container | COPY(0, take.n);
 };
 
@@ -118,7 +119,7 @@ struct DROP {
     DROP(int n): n(n) {}
 };
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, DROP drop){
+auto operator|(CONTAINER container, DROP drop){
     return container | COPY(drop.n);
 };
 
@@ -131,7 +132,7 @@ struct FILTER {
 };
 
 template<typename CONTAINER, typename LAMBDA>
-auto operator|(CONTAINER&& container, FILTER<LAMBDA> filter){
+auto operator|(CONTAINER container, FILTER<LAMBDA> filter){
     auto aux = container | NEWVET();
     std::copy_if(container.begin(), container.end(), std::back_inserter(aux), filter.fn);
     return aux;
@@ -145,7 +146,7 @@ struct MAP {
 };
 
 template<typename CONTAINER, typename LAMBDA>
-auto operator|(CONTAINER&& container, MAP<LAMBDA> map){
+auto operator|(CONTAINER container, MAP<LAMBDA> map){
     std::vector<decltype(map.fn(*container.begin()))> aux;
     std::transform(container.begin(), container.end(), std::back_inserter(aux), map.fn);
     return aux;
@@ -185,6 +186,11 @@ T operator|(std::string value, STR2<T> str2) {
     return str2(value);
 }
 
+template <typename T>
+T to(std::string value) {
+    return STR2<T>()(value);
+}
+
 //-------------------------------------------------
 
 template <typename... Args>
@@ -206,7 +212,7 @@ auto operator|(const std::string& line, TUPLEFY<Args...> parse) {
     };
 
     std::apply(
-        [&is, &parse, get_token](auto&&... args) {
+        [&is, &parse, get_token](auto... args) {
             ((get_token(is, parse.delimiter, args)), ...);
         },t);
     return t;
@@ -231,18 +237,6 @@ std::string operator|(DATA data, STR fmt) {
 }
 
 //-------------------------------------------------
-
-struct PRINT {
-    std::string end;
-    PRINT(std::string end = "\n") : end(end) {}
-};
-
-template<typename DATA>
-void operator|(DATA&& data, PRINT print) {
-    std::cout << data << print.end;
-}
-
-//-------------------------------------------------
 struct FMT {
     std::string delimiter;
     std::string prefix;
@@ -252,7 +246,7 @@ struct FMT {
 };
 
 template <class CONTAINER>
-std::string operator|(CONTAINER&& container, FMT fmt) {
+std::string operator|(CONTAINER container, FMT fmt) {
     return fmt.prefix + (container | JOIN(fmt.delimiter)) + fmt.suffix;
 }
 //-------------------------------------------------
@@ -262,7 +256,7 @@ struct KEYS {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, KEYS){
+auto operator|(CONTAINER container, KEYS){
     return container | MAP([](auto x) { return x.first; });
 };
 
@@ -272,7 +266,7 @@ struct VALUES {
     VALUES() {}
 };
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, VALUES){
+auto operator|(CONTAINER container, VALUES){
     return container | MAP([](auto x) { return x.second; });
 };
 
@@ -282,7 +276,7 @@ struct REVERSE {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, REVERSE){
+auto operator|(CONTAINER container, REVERSE){
     auto aux = container | NEWVET();
     std::copy(container.rbegin(), container.rend(), std::back_inserter(aux));
     return aux;
@@ -294,7 +288,7 @@ struct SORT {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, SORT){
+auto operator|(CONTAINER container, SORT){
     auto aux = container | COPY();
     std::sort(aux.begin(), aux.end());
     return aux;
@@ -308,7 +302,7 @@ struct SORTBY {
 };
 
 template<typename CONTAINER, typename LAMBDA>
-auto operator|(CONTAINER&& container, SORTBY<LAMBDA> sortby){
+auto operator|(CONTAINER container, SORTBY<LAMBDA> sortby){
     auto aux = container | COPY();
     std::sort(aux.begin(), aux.end(), sortby.fn);
     return aux;
@@ -320,7 +314,7 @@ struct SHUFFLE {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, SHUFFLE){
+auto operator|(CONTAINER container, SHUFFLE){
     auto aux = container | COPY();
     std::random_shuffle(aux.begin(), aux.end());
     return aux;
@@ -335,7 +329,7 @@ struct FOLD {
 };
 
 template<typename CONTAINER, typename LAMBDA, typename ACC>
-auto operator|(CONTAINER&& container, FOLD<LAMBDA, ACC> fold){
+auto operator|(CONTAINER container, FOLD<LAMBDA, ACC> fold){
     ACC output = fold.acc;
     for (const auto& item : container)
         output = fold.fn(output, item);
@@ -347,7 +341,7 @@ struct SUM {
 };
 
 template<typename CONTAINER>
-auto operator|(CONTAINER&& container, SUM){
+auto operator|(CONTAINER container, SUM){
     return container | FOLD([](auto acc, auto x) { return acc + x; }, 0);
 };
 //-------------------------------------------------
@@ -358,7 +352,7 @@ struct FINDIF {
 };
 
 template<typename CONTAINER, typename LAMBDA>
-auto operator|(CONTAINER&& container, FINDIF<LAMBDA> findif){
+auto operator|(CONTAINER container, FINDIF<LAMBDA> findif){
     return std::find_if(container.begin(), container.end(), findif.fn);
 };
 
@@ -370,7 +364,7 @@ struct FIND {
 };
 
 template<typename CONTAINER, typename VALUE>
-auto operator|(CONTAINER&& container, FIND<VALUE> find){
+auto operator|(CONTAINER container, FIND<VALUE> find){
     return std::find(container.begin(), container.end(), find.value);
 };
 //-------------------------------------------------
@@ -388,7 +382,7 @@ auto operator|(CONTAINER container, ZIP<CONTAINER2> zip){
 
     auto ita = container.begin();
     auto itb = zip.container.begin();
-    while(ita != container.end() && itb != zip.container.end()) {
+    while(ita != container.end() &&  itb != zip.container.end()) {
         aux.push_back({*ita, *itb});
         ita++;
         itb++;
@@ -406,6 +400,19 @@ struct PIPE {
 template<typename T, typename LAMBDA>
 auto operator|(T data, PIPE<LAMBDA> pipe) {
     return pipe.fn(data);
+}
+
+
+//-------------------------------------------------
+
+struct PRINT {
+    std::string end;
+    PRINT(std::string end = "\n") : end(end) {}
+};
+
+template<typename DATA>
+void operator|(DATA data, PRINT print) {
+    std::cout << data << print.end;
 }
 
 //-------------------------------------------------
