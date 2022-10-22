@@ -119,13 +119,13 @@ struct COPY {
         int begin = 0;
         int end = size;
         if (!from_begin) {
-            begin = begin;
+            begin = this->begin;
             if (begin < 0)
                 begin = size + begin;
             begin = std::min(begin, size);
         }
         if (!to_end) {
-            end = end;
+            end = this->end;
             if (end < 0)
                 end = size + end;
             end = std::min(end, size);

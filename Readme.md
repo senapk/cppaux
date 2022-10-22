@@ -1,14 +1,32 @@
 # FAKEFN for c++
 
-```c++
-STR2<int>()(12); // 12
-"56" | STR2<int>(); //56
-```
-
-```c++
-IOTA(1, 10)// [1, 2, 3, 4, 5, 6, 7, 8, 9]
-IOTA(1, 10, 2)// [1, 3, 5, 7, 9]
-```
-
-```c++
-```
+- PIPE<FUNCTION>(fn)
+- IOTA(init, end, step)
+- CONTAINER | JOIN(separator)
+- CONTAINER | NETVET
+- CONTAINER | COPY(init, end)
+- CONTAINER | TAKE(qtd)
+- CONTAINER | DROP(qtd)
+- CONTAINER | FILTER(fn)
+- CONATINER | MAP(fn)
+- STRING    | SPLIT(delimiter)
+- STRING    | STR2<TYPE>
+- STRING    | TUPLEFY<TYPES...>
+- DATA      | STR
+- FMT
+- KEYS
+- VALUES
+- REVERSE
+- SORT
+- SORTBY
+- SHUFFLE
+- FOLD
+- SUM
+- FIND
+- FINDIF
+- FOREACH
+- INDEXOF
+- ZIP
+- PRINT
+- STREAM
+- COLLECT
