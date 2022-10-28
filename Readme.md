@@ -1,32 +1,78 @@
 # FAKEFN for c++
 
-- PIPE<FUNCTION>(fn)
+
+- ASSERT(Printable)
+  - Data<Printable> -> Data
+- PIPE(Lfn)
+	- any -> any
 - IOTA(init, end, step)
-- CONTAINER | JOIN(separator)
-- CONTAINER | NETVET
-- CONTAINER | COPY(init, end)
-- CONTAINER | TAKE(qtd)
-- CONTAINER | DROP(qtd)
-- CONTAINER | FILTER(fn)
-- CONATINER | MAP(fn)
-- STRING    | SPLIT(delimiter)
-- STRING    | STR2<TYPE>
-- STRING    | TUPLEFY<TYPES...>
-- DATA      | STR
+	- void -> vector<int>
+----------------------------------------
+- JOIN(separator)
+	- container -> str
+	- tuple -> str
+	- pair -> str
 - FMT
+	- CONTAINER | TUPLE | PAIR -> str
+- STR
+	- data | STR() -> str
+	- data | STR(fmt) -> str
+----------------------------------------
+- NETVET
+	- container -> vector empty 
+- TOVEC
+	- container -> vector
+----------------------------------------
+- SLICE(init, end)
+	- container -> vector
+- TAKE(qtd)
+	- container -> vector
+- DROP(qtd)
+	- container -> vector
+----------------------------------------
+- FILTER(fn)
+	- container -> vector
+- MAP(fn)
+	- container -> vector
 - KEYS
+	- container<pair> -> vector
 - VALUES
+	- container<pair> -> vector
+----------------------------------------
+- SPLIT(delimiter)
+	- string -> vector<string>
+- STR2<TYPE>
+	- string -> type
+- TUPLEFY<TYPES...>
+	- string -> tuple
+----------------------------------------
 - REVERSE
+	- container -> vector
 - SORT
+	- container -> vector
 - SORTBY
+	- container -> vector
 - SHUFFLE
+	- container -> vector
+----------------------------------------
 - FOLD
+	- container -> value
 - SUM
+	- container -> value
+----------------------------------------
 - FIND
+	- &container -> iterator
 - FINDIF
+	- &container -> iterator
 - FOREACH
+	- &container -> iterator
 - INDEXOF
+	- container -> value
 - ZIP
+	- container -> container<pair>
 - PRINT
+	- data -> data
 - STREAM
+	- void -> stream
 - COLLECT
+	- stream -> string
