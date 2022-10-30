@@ -106,10 +106,10 @@ public:
     }
 };
 
-template<typename PRINTABLE>
-std::string str(PRINTABLE data) {
-    return data | STR();
-}
+// template<typename PRINTABLE>
+// std::string str(PRINTABLE data) {
+//     return data | STR();
+// }
 
 // //-------------------------------------------------
 // struct CSTR {
@@ -160,10 +160,10 @@ struct ASSERT {
     };
 };
 
-template<typename PRINTABLE, typename EXPECTED>
-PRINTABLE asserteq(PRINTABLE data, EXPECTED expected, std::string label = "") {
-    return data | ASSERT<EXPECTED>(expected, label);
-};
+// template<typename PRINTABLE, typename EXPECTED>
+// PRINTABLE asserteq(PRINTABLE data, EXPECTED expected, std::string label = "") {
+//     return data | ASSERT<EXPECTED>(expected, label);
+// };
 
 
 //-------------------------------------------------
@@ -213,10 +213,10 @@ struct PRINT {
     }
 };
 
-template<typename DATA>
-DATA print(DATA data, std::string end = "\n") {
-    return data | PRINT(end);
-}
+// template<typename DATA>
+// DATA print(DATA data, std::string end = "\n") {
+//     return data | PRINT(end);
+// }
 
 
 // -------------------------------------------------
@@ -237,6 +237,11 @@ struct JOIN {
         return join(container);
     }
 };
+
+// template <class CONTAINER>
+// std::string join(CONTAINER container, std::string separator = "", std::string brakets = "") {
+//     return container | JOIN(separator, brakets);
+// }
 
 //-------------------------------------------------
 class FMT {
@@ -279,6 +284,11 @@ public:
         return fmt(printable);
     }
 };
+
+// template <class PRINTABLE>
+// std::string fmt(PRINTABLE printable, std::string cfmt = "") {
+//     return printable | FMT(cfmt);
+// }
 
 // template <typename ...Args>
 // std::string fmtstr(const std::string& format, Args && ...args)
@@ -340,6 +350,10 @@ public:
     }
 };
 
+// template<typename... Args>
+// std::string mesh(std::string fmt, Args... args) {
+//     return fmt | MESH(args...);
+// }
 
 //-------------------------------------------------
 template<typename FUNCTION>
@@ -359,6 +373,12 @@ struct MAP {
         return map(container);
     };
 };
+
+// template<typename CONTAINER, typename FUNCTION>
+// auto map(CONTAINER container, FUNCTION fn){
+//     return container | MAP(fn);
+// };
+
 
 //-------------------------------------------------
 std::vector<int> IOTA(int init, int end, int step = 1) {
