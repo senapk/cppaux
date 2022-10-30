@@ -76,3 +76,9 @@
 	- void -> stream
 - COLLECT
 	- stream -> string
+
+
+
+vector | STR(",", "()")
+5.234  | STR("%02d") 
+vector<pair> | STR() 
