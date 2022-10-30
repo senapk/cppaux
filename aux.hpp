@@ -18,7 +18,42 @@ namespace aux {
 
 //-------------------------------------------------
 class STR {
+    std::string cfmt;
 public:
+
+    template <typename ...Args>
+    static std::string cformat(const std::string& format, Args && ...args)
+    {
+        auto size = std::snprintf(nullptr, 0, format.c_str(), std::forward<Args>(args)...);
+        std::string output(size + 1, '\0');
+        std::sprintf(&output[0], format.c_str(), std::forward<Args>(args)...);
+        if (output.back() == '\0') 
+            output.pop_back();
+        return output;
+    }
+
+    // static std::string cformat2(std::string fmt, ...) {
+    //     int size=100;
+    //     std::string str;
+    //     va_list ap;
+
+    //     while (1) {
+    //         str.resize(size);
+    //         va_start(ap, fmt);
+    //         int n = vsnprintf(&str[0], size, fmt.c_str(), ap);
+    //         va_end(ap);
+    
+    //         if (n > -1 && n < size) {
+    //             str.resize(n); // Make sure there are no trailing zero char
+    //             return str;
+    //         }
+    //         if (n > -1)
+    //             size = n + 1;
+    //         else
+    //             size *= 2;
+    //     }
+    // }
+
     static std::string embrace(std::string data, std::string brakets) {
         auto prefix = brakets.size() > 0 ? std::string {brakets[0]} : "";
         auto suffix = brakets.size() > 1 ? std::string {brakets[1]} : "";
@@ -52,7 +87,8 @@ public:
         return STR::embrace(output, brakets);
     }
 
-    STR(){}
+    //-----------------------------------------------------
+    STR(std::string cfmt = ""): cfmt(cfmt){}
 
     std::string operator()(std::string data) {
         return data;
@@ -87,16 +123,30 @@ public:
         return STR::join(v);
     }
 
+    template <typename T>
+    std::string operator()(const std::unordered_set<T> &v) {
+        return STR::join(v);
+    }
+
     template <typename K, typename T>
     std::string operator()(const std::map<K, T> &v) {
         return STR::join(v);
     }
 
+    template <typename K, typename T>
+    std::string operator()(const std::unordered_map<K, T> &v) {
+        return STR::join(v);
+    }
+
     template<typename PRINTABLE>
     std::string operator()(PRINTABLE data) {
-        std::ostringstream ss;
-        ss << data;
-        return ss.str();
+        if (this->cfmt == "") {
+            std::ostringstream ss;
+            ss << data;
+            return ss.str();
+        } else {
+            return STR::cformat(this->cfmt, data);
+        }
     }
 
     //-----------------------------------------------------
@@ -106,65 +156,33 @@ public:
     }
 };
 
-// template<typename PRINTABLE>
-// std::string str(PRINTABLE data) {
-//     return data | STR();
-// }
-
-// //-------------------------------------------------
-// struct CSTR {
-//     static std::string output;
-
-//     template <typename PRINTABLE>
-//     const char * operator()(PRINTABLE data) {
-//         output = STR()(data);
-//         return output.c_str();
-//     }
-
-//     template <typename PRINTABLE>
-//     friend const char * operator|(PRINTABLE data, CSTR cstr) {
-//         return cstr(data);
-//     }
-// };
-// std::string CSTR::output = "";
-
-
 //-------------------------------------------------
 template <typename PRINTABLE>
 struct ASSERT {
-    std::string expected;
+    PRINTABLE expected;
     std::string label;
     ASSERT(PRINTABLE expected, std::string label = "") {
-        this->expected = STR()(expected);
+        this->expected = expected;
         this->label = label;
     }
 
-    template<typename DATA>
-    DATA operator()(DATA data){
-        auto received = STR()(data);
+    PRINTABLE operator()(PRINTABLE received){
 
         if (received != expected) {
             std::cout << "ERROR: " << this->label 
-                      << "\n---------received----------\n" << received 
-                      << "\n---------expected----------\n" << expected 
-                      << '\n';
+                      << "\n---------received----------\n\"" << STR()(received) 
+                      << "\"\n---------expected----------\n\"" << STR()(expected) 
+                      << "\"\n";
             exit(1);
         }
-        return data;
+        return received;
     };
 
-    template<typename DATA>
-    friend DATA operator|(DATA data, ASSERT<PRINTABLE> ass){
+    friend PRINTABLE operator|(PRINTABLE data, ASSERT<PRINTABLE> ass){
         ass(data);
         return data;
     };
 };
-
-// template<typename PRINTABLE, typename EXPECTED>
-// PRINTABLE asserteq(PRINTABLE data, EXPECTED expected, std::string label = "") {
-//     return data | ASSERT<EXPECTED>(expected, label);
-// };
-
 
 //-------------------------------------------------
 template<typename FUNCTION> 
@@ -196,14 +214,13 @@ struct PIPE {
 #define FMAPE2(x, y, fxy)            [&](auto x, auto y) { return fxy; }
 
 //-------------------------------------------------
-
 struct PRINT {
     std::string end;
     PRINT(std::string end = "\n") : end(end) {}
 
     template<typename DATA>
     DATA operator()(DATA data) {
-        std::cout << STR()(data) << this->end;
+        std::cout << data << this->end;
         return data;
     }
 
@@ -212,12 +229,6 @@ struct PRINT {
         return print(data);
     }
 };
-
-// template<typename DATA>
-// DATA print(DATA data, std::string end = "\n") {
-//     return data | PRINT(end);
-// }
-
 
 // -------------------------------------------------
 struct JOIN {
@@ -238,69 +249,50 @@ struct JOIN {
     }
 };
 
-// template <class CONTAINER>
-// std::string join(CONTAINER container, std::string separator = "", std::string brakets = "") {
-//     return container | JOIN(separator, brakets);
-// }
+// //-------------------------------------------------
+// class FMT {
+//     std::string fmt;
+// public:
+//     FMT(std::string fmt = ""): fmt(fmt) {
+//     }
 
-//-------------------------------------------------
-class FMT {
-    std::string fmt;
-public:
-    FMT(std::string fmt = ""): fmt(fmt) {
-    }
+//     static std::string format(std::string fmt, ...) {
+//         int size=100;
+//         std::string str;
+//         va_list ap;
 
-    static std::string format(std::string fmt, ...) {
-        int size=100;
-        std::string str;
-        va_list ap;
-
-        while (1) {
-            str.resize(size);
-            va_start(ap, fmt);
-            int n = vsnprintf(&str[0], size, fmt.c_str(), ap);
-            va_end(ap);
+//         while (1) {
+//             str.resize(size);
+//             va_start(ap, fmt);
+//             int n = vsnprintf(&str[0], size, fmt.c_str(), ap);
+//             va_end(ap);
     
-            if (n > -1 && n < size) {
-                str.resize(n); // Make sure there are no trailing zero char
-                return str;
-            }
-            if (n > -1)
-                size = n + 1;
-            else
-                size *= 2;
-        }
-    }
+//             if (n > -1 && n < size) {
+//                 str.resize(n); // Make sure there are no trailing zero char
+//                 return str;
+//             }
+//             if (n > -1)
+//                 size = n + 1;
+//             else
+//                 size *= 2;
+//         }
+//     }
 
-    template <class PRINTABLE>
-    std::string operator()(PRINTABLE printable) {
-        if(this->fmt == "")
-            return STR()(printable);
-        return FMT::format(this->fmt, printable);
-    }
+//     template <class PRINTABLE>
+//     std::string operator()(PRINTABLE printable) {
+//         if(this->fmt == "")
+//             return STR()(printable);
+//         return FMT::format(this->fmt, printable);
+//     }
 
-    template <class PRINTABLE>
-    friend std::string operator|(PRINTABLE printable, FMT fmt) {
-        return fmt(printable);
-    }
-};
-
-// template <class PRINTABLE>
-// std::string fmt(PRINTABLE printable, std::string cfmt = "") {
-//     return printable | FMT(cfmt);
-// }
-
-// template <typename ...Args>
-// std::string fmtstr(const std::string& format, Args && ...args)
-// {
-//     auto size = std::snprintf(nullptr, 0, format.c_str(), std::forward<Args>(args)...);
-//     std::string output(size + 1, '\0');
-//     std::sprintf(&output[0], format.c_str(), std::forward<Args>(args)...);
-//     return output;
-// }
+//     template <class PRINTABLE>
+//     friend std::string operator|(PRINTABLE printable, FMT fmt) {
+//         return fmt(printable);
+//     }
+// };
 
 template<typename... Args>
-class MESH {
+class FORMAT {
     std::vector<std::string> to_vector_str(Args... args)
     {
         std::vector<std::string> result;
@@ -312,7 +304,7 @@ class MESH {
 public:
     std::vector<std::string> data;
 
-    MESH(Args... args) {
+    FORMAT(Args... args) {
         this->data = to_vector_str(args...);
     }
 
@@ -345,15 +337,10 @@ public:
         return output.str();
     }
 
-    friend std::string operator| (std::string fmt, MESH<Args...> mesh) {
+    friend std::string operator| (std::string fmt, FORMAT<Args...> mesh) {
         return mesh(fmt);
     }
 };
-
-// template<typename... Args>
-// std::string mesh(std::string fmt, Args... args) {
-//     return fmt | MESH(args...);
-// }
 
 //-------------------------------------------------
 template<typename FUNCTION>
@@ -373,12 +360,6 @@ struct MAP {
         return map(container);
     };
 };
-
-// template<typename CONTAINER, typename FUNCTION>
-// auto map(CONTAINER container, FUNCTION fn){
-//     return container | MAP(fn);
-// };
-
 
 //-------------------------------------------------
 std::vector<int> IOTA(int init, int end, int step = 1) {
@@ -572,17 +553,13 @@ struct STR2 {
     }
 };
 
-
-//-------------------------------------------------
-//DEPRECATED
-
+//DEPRECATED --------------------------------------
 template <typename T>
 T to(std::string value) {
     return STR2<T>()(value);
 }
 
 //-------------------------------------------------
-
 template <typename... Types>
 struct TUPLEFY {
     char delimiter;
@@ -611,9 +588,7 @@ struct TUPLEFY {
     }
 };
 
-
 //-------------------------------------------------
-
 struct KEYS {
     KEYS() {}
     template<typename CONTAINER>
@@ -627,9 +602,7 @@ struct KEYS {
     };
 };
 
-
 //-------------------------------------------------
-
 struct VALUES {
     VALUES() {}
     template<typename CONTAINER>
@@ -660,7 +633,6 @@ struct REVERSE {
     };
 };
 
-
 //-------------------------------------------------
 struct SORT {
     SORT() {}
@@ -677,7 +649,6 @@ struct SORT {
         return sort(container);
     };
 };
-
 
 //-------------------------------------------------
 template <typename FUNCTION>
@@ -698,7 +669,6 @@ struct SORTBY {
     };
 };
 
-
 //-------------------------------------------------
 struct SHUFFLE {
     SHUFFLE() {}
@@ -715,7 +685,6 @@ struct SHUFFLE {
         return shuffle(container);
     };
 };
-
 
 //-------------------------------------------------
 template <typename FUNCTION, typename ACC>
@@ -772,19 +741,6 @@ struct SUM {
 
 };
 
-
-// //-------------------------------------------------
-// template<typename FUNCTION>
-// struct FINDIF {
-//     FUNCTION fn;
-//     FINDIF(FUNCTION fn) : fn(fn) {}
-// };
-
-// template<typename CONTAINER, typename FUNCTION>
-// auto operator|(CONTAINER& container, FINDIF<FUNCTION> findif){
-//     return std::find_if(container.begin(), container.end(), findif.fn);
-// };
-
 //-------------------------------------------------
 template<typename FUNCTION>
 struct FOREACH {
@@ -801,26 +757,6 @@ struct FOREACH {
         foreach(container);
     };
 };
-
-
-
-
-// //-------------------------------------------------
-// template<typename VALUE>
-// struct FIND {
-//     VALUE value;
-//     FIND(VALUE value) : value(value) {}
-
-//     template<typename CONTAINER>
-//     auto operator()(CONTAINER& container){
-//         return std::find(container.begin(), container.end(), value);
-//     };
-// };
-
-// template<typename CONTAINER, typename VALUE>
-// auto operator|(CONTAINER& container, FIND<VALUE> find){
-//     return find(container);
-// };
 
 //-------------------------------------------------
 template<typename VALUE>
@@ -841,7 +777,6 @@ struct INDEXOF {
         return find(container);
     };
 };
-
 
 //-------------------------------------------------
 template <typename CONTAINER>
@@ -916,12 +851,7 @@ public:
     };
 };
 
-
-
-
-
 //-------------------------------------------------
-
 template <typename DATA>
 struct CC {
     std::string content;
@@ -938,34 +868,33 @@ struct CC {
     }
 };
 
-
 //-------------------------------------------------
 
 
-// using Chain = std::map<std::string, std::function<void()>>;
-// using Param = std::vector<std::string>;
+using Chain = std::map<std::string, std::function<void()>>;
+using Param = std::vector<std::string>;
 
-// void execute(Chain& chain, Param& ui) {
-//     while(true) {
-//         std::string line{}, cmd{};
-//         std::getline(std::cin, line);
-//         std::stringstream ss(line);
-//         ss >> cmd;
-//         ui = line | SPLIT(' ');
-//         std::cout << "$" << line << '\n';
-//         if (cmd == "end") {
-//             break;
-//         } else if (chain.count(cmd) != 0) {
-//             try {
-//                 chain[cmd]();
-//             } catch (std::string& e) {
-//                 std::cout << e << '\n';
-//             }
-//         } else {
-//             std::cout << "fail: command not found\n";
-//         }
-//     }
-// }
+void execute(Chain& chain, Param& ui) {
+    while(true) {
+        std::string line{}, cmd{};
+        std::getline(std::cin, line);
+        std::stringstream ss(line);
+        ss >> cmd;
+        ui = line | SPLIT(' ');
+        std::cout << "$" << line << '\n';
+        if (cmd == "end") {
+            break;
+        } else if (chain.count(cmd) != 0) {
+            try {
+                chain[cmd]();
+            } catch (std::string& e) {
+                std::cout << e << '\n';
+            }
+        } else {
+            std::cout << "fail: command not found\n";
+        }
+    }
+}
 
 
 
