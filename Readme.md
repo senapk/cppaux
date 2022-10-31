@@ -2,10 +2,17 @@
 
 Funções
 - iota(begin, end, inc = 1)
-- tostr(data, cfmt = "")
-- str2
-- format()
-- split 
+- str2<type>
+
+- str(data, cfmt = "")
+- format(format, args...)
+
+- split (string, )
+- join(container, sep="", brakets="")
+
+- print(data, end="\n")
+
+
 ---------------------------------------
 - ASSERT(Printable)
   - Data<Printable> -> Data
@@ -22,9 +29,6 @@ Funções
 	- format | vararg 
 - STR
 	- data | STR(fmt) -> str
-----------------------------------------
-- NETVET
-	- container -> vector empty 
 ----------------------------------------
 - SLICE(init, end)
 	- container -> vector
@@ -49,24 +53,14 @@ Funções
 - TUPLEFY<TYPES...>
 	- string -> tuple
 ----------------------------------------
-- REVERSE
-	- container -> vector
-- SORT
-	- container -> vector
 - SORTBY
-	- container -> vector
-- SHUFFLE
 	- container -> vector
 ----------------------------------------
 - FOLD
 	- container -> value
-- SUM
+- FOLD1
 	- container -> value
 ----------------------------------------
-- FIND
-	- &container -> iterator
-- FINDIF
-	- &container -> iterator
 - FOREACH
 	- &container -> iterator
 - INDEXOF

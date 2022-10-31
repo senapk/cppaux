@@ -73,14 +73,6 @@ public:
     STR(std::string cfmt = ""): cfmt(cfmt){
     }
 
-    // std::string operator()(std::string data) {
-    //     return data;
-    // }
-
-    // std::string operator()(const char * data) {
-    //     return std::string(data);
-    // }
-
     template<typename A, typename B>
     std::string operator()(const std::pair<A, B>& pair) {
         return this->join(pair);
@@ -212,7 +204,6 @@ struct PIPE {
 //-------------------------------------------------
 #define FMAP(x, fx)             PIPE([] (auto x) { return fx; })
 #define FMAPE(x, fx)            PIPE([&](auto x) { return fx; })
-#define FMAPR(x, pre, ret)      PIPE([] (auto x) { pre; return ret; })
 
 #define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
 #define FMAPE2(x, y, fxy)            [&](auto x, auto y) { return fxy; }
@@ -253,8 +244,6 @@ struct JOIN {
     }
 };
 
-
-
 //-------------------------------------------------
 template<typename FUNCTION>
 struct MAP {
@@ -290,40 +279,34 @@ std::vector<int> IOTA(int init, int end, int step = 1) {
 }
 
 //-------------------------------------------------
-struct NEWVECFROM {
+class SLICE {
+    int begin;
+    int end;
+    bool from_begin {false};
+    bool to_end {false};
+
     template<typename CONTAINER>
-    auto operator()(CONTAINER container) {
+    static auto new_vec_from(CONTAINER container) {
         auto fn = [](auto x) {return x;}; 
         std::vector<decltype(fn(*container.begin()))> aux;
         return aux;
     }
 
     template <typename K, typename T>
-    auto operator()(std::map<K, T> container) {
+    static auto new_vec_from(std::map<K, T> container) {
         auto fn = [](auto x) {return x;}; 
         std::vector<std::pair<decltype(fn(container.begin()->first)), decltype(fn(container.begin()->second))>> aux;
         return aux;
     }
 
     template <typename K, typename T>
-    auto operator()(std::unordered_map<K, T> container) {
+    static auto new_vec_from(std::unordered_map<K, T> container) {
         auto fn = [](auto x) {return x;}; 
         std::vector<std::pair<decltype(fn(container.begin()->first)), decltype(fn(container.begin()->second))>> aux;
         return aux;
     }
 
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, NEWVECFROM newvec) {
-        return newvec(container);
-    }
-};
-
-//-------------------------------------------------
-struct SLICE {
-    int begin;
-    int end;
-    bool from_begin {false};
-    bool to_end {false};
+public:
     SLICE() {
         this->from_begin = true;
         this->to_end = true;
@@ -342,7 +325,14 @@ struct SLICE {
 
     template<typename CONTAINER>
     auto operator()(CONTAINER container) {
-        auto aux = container | NEWVECFROM();
+        auto aux = SLICE::new_vec_from(container);
+        
+        //empty container
+        if (!this->from_begin && !this->to_end && (this->begin == this->end)) {
+            return aux;
+        }
+
+        //full container
         if (this->from_begin && this->to_end) {
             std::copy(container.begin(), container.end(), std::back_inserter(aux));
             return aux;
@@ -418,7 +408,7 @@ struct FILTER {
 
     template<typename CONTAINER>
     auto operator()(CONTAINER container){
-        auto aux = container | NEWVECFROM();
+        auto aux = container | SLICE(0, 0);
         std::copy_if(container.begin(), container.end(), std::back_inserter(aux), fn);
         return aux;
     };
@@ -466,12 +456,6 @@ struct STR2 {
     }
 };
 
-//DEPRECATED --------------------------------------
-template <typename T>
-T to(std::string value) {
-    return STR2<T>()(value);
-}
-
 //-------------------------------------------------
 template <typename... Types>
 struct TUPLEFY {
@@ -502,54 +486,6 @@ struct TUPLEFY {
 };
 
 //-------------------------------------------------
-// struct KEYS {
-//     KEYS() {}
-//     template<typename CONTAINER>
-//     auto operator()(CONTAINER container){
-//         return container | MAP([](auto x) { return x.first; });
-//     };
-
-//     template<typename CONTAINER>
-//     friend auto operator|(CONTAINER container, KEYS keys){
-//         return keys(container);
-//     };
-// };
-
-//-------------------------------------------------
-// struct REVERSE {
-//     REVERSE() {}
-
-//     template<typename CONTAINER>
-//     auto operator()(CONTAINER container){
-//         auto aux = container | NEWVECFROM();
-//         std::copy(container.rbegin(), container.rend(), std::back_inserter(aux));
-//         return aux;
-//     };
-
-//     template<typename CONTAINER>
-//     friend auto operator|(CONTAINER container, REVERSE reverse){
-//         return reverse(container);
-//     };
-// };
-
-//-------------------------------------------------
-// struct SORT {
-//     SORT() {}
-
-//     template<typename CONTAINER>
-//     auto operator()(CONTAINER container){
-//         auto aux = container | SLICE();
-//         std::sort(aux.begin(), aux.end());
-//         return aux;
-//     };
-
-//     template<typename CONTAINER>
-//     friend auto operator|(CONTAINER container, SORT sort){
-//         return sort(container);
-//     };
-// };
-
-//-------------------------------------------------
 template <typename FUNCTION>
 struct SORTBY {
     FUNCTION fn;
@@ -569,112 +505,81 @@ struct SORTBY {
 };
 
 // //-------------------------------------------------
-// struct SHUFFLE {
-//     SHUFFLE() {}
+// template <typename FUNCTION, typename ACC>
+// struct FOLD {
+//     FUNCTION fn;
+//     ACC acc;
+
+//     FOLD(FUNCTION fn, ACC acc) : fn(fn), acc(acc){}
 
 //     template<typename CONTAINER>
 //     auto operator()(CONTAINER container){
-//         auto aux = container | SLICE();
-//         std::random_shuffle(aux.begin(), aux.end());
-//         return aux;
+//         ACC output = this->acc;
+//         for (const auto& item : container)
+//             output = this->fn(output, item);
+//         return output;
 //     };
 
 //     template<typename CONTAINER>
-//     friend auto operator|(CONTAINER container, SHUFFLE shuffle){
-//         return shuffle(container);
+//     friend auto operator|(CONTAINER container, FOLD<FUNCTION, ACC> fold) {
+//         return fold(container);
+//     };
+// };
+
+// //-------------------------------------------------
+// template <typename FUNCTION>
+// struct FOLD1 {
+//     FUNCTION fn;
+//     FOLD1(FUNCTION fn) : fn(fn){}
+
+//     template<typename CONTAINER>
+//     auto operator()(CONTAINER container){
+//         auto front = container.front();
+//         return container | SLICE(1) | FOLD(this->fn, front);
+//     };
+
+//     template<typename CONTAINER>
+//     friend auto operator|(CONTAINER container, FOLD1<FUNCTION> fold){
+//         return fold(container);
 //     };
 // };
 
 //-------------------------------------------------
-template <typename FUNCTION, typename ACC>
-struct FOLD {
-    FUNCTION fn;
-    ACC acc;
-    FOLD(FUNCTION fn, ACC acc) : fn(fn), acc(acc) {}
-
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        ACC output = this->acc;
-        for (const auto& item : container)
-            output = this->fn(output, item);
-        return output;
-    };
-
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, FOLD<FUNCTION, ACC> fold){
-        return fold(container);
-    };
-};
-
-//-------------------------------------------------
-template <typename FUNCTION>
-struct FOLD1 {
-    FUNCTION fn;
-    FOLD1(FUNCTION fn) : fn(fn){}
-
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        auto front = container.front();
-        return container | SLICE(1) | FOLD(this->fn, front);
-    };
-
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, FOLD1<FUNCTION> fold){
-        return fold(container);
-    };
-};
-
-//-------------------------------------------------
-// struct SUM {
-//     SUM() {}
-
-//     template<typename CONTAINER>
-//     auto operator()(CONTAINER container){
-//         return container | FOLD1([](auto acc, auto x) { return acc + x; });
-//     };
-
-//     template<typename CONTAINER>
-//     friend auto operator|(CONTAINER container, SUM sum){
-//         return sum(container);
-//     };
-// };
-
-//-------------------------------------------------
-template<typename FUNCTION>
-struct FOREACH {
-    FUNCTION fn;
-    FOREACH(FUNCTION fn) : fn(fn) {}
+// template<typename FUNCTION>
+// struct FOREACH {
+//     FUNCTION fn;
+//     FOREACH(FUNCTION fn) : fn(fn) {}
     
-    template<typename CONTAINER>
-    void operator()(CONTAINER container){
-        std::for_each(container.begin(), container.end(), this->fn);
-    };
+//     template<typename CONTAINER>
+//     void operator()(CONTAINER container){
+//         std::for_each(container.begin(), container.end(), this->fn);
+//     };
 
-    template<typename CONTAINER>
-    friend void operator|(CONTAINER container, FOREACH<FUNCTION> foreach){
-        foreach(container);
-    };
-};
+//     template<typename CONTAINER>
+//     friend void operator|(CONTAINER container, FOREACH<FUNCTION> foreach){
+//         foreach(container);
+//     };
+// };
 
 //-------------------------------------------------
-template<typename VALUE>
-struct INDEXOF {
-    VALUE value;
-    INDEXOF(VALUE value) : value(value) {}
+// template<typename VALUE>
+// struct INDEXOF {
+//     VALUE value;
+//     INDEXOF(VALUE value) : value(value) {}
 
-    template<typename CONTAINER>
-    int operator()(CONTAINER container){
-        auto it = std::find(container.begin(), container.end(), value);
-        if (it == container.end())
-            return -1;
-        return std::distance(container.begin(), it);
-    };
+//     template<typename CONTAINER>
+//     int operator()(CONTAINER container){
+//         auto it = std::find(container.begin(), container.end(), value);
+//         if (it == container.end())
+//             return -1;
+//         return std::distance(container.begin(), it);
+//     };
 
-    template<typename CONTAINER>
-    friend int operator|(CONTAINER container, INDEXOF<VALUE> find){
-        return find(container);
-    };
-};
+//     template<typename CONTAINER>
+//     friend int operator|(CONTAINER container, INDEXOF<VALUE> find){
+//         return find(container);
+//     };
+// };
 
 //-------------------------------------------------
 template <typename CONTAINER>
@@ -826,31 +731,54 @@ public:
     }
 };
 
+
 auto KEYS    = PIPE(MAP(FMAP(x, x.first)));
 auto VALUES  = PIPE(MAP(FMAP(x, x.second)));
 auto SORT    = PIPE([](auto v) { auto z = v | SLICE(); std::sort(z.begin(), z.end()); return z;});
 auto REVERSE = PIPE([](auto v) { auto z = v | SLICE(); std::reverse(z.begin(), z.end()); return z;});
 auto SHUFFLE = PIPE([](auto v) { auto z = v | SLICE(); std::random_shuffle(z.begin(), z.end()); return z;});
 auto UNIQUE  = PIPE([](auto y) { auto v = y | SLICE(); std::sort(v.begin(), v.end()); v.erase(std::unique(v.begin(), v.end()), v.end()); return v;});
-auto SUM     = FMAP(x, x | FOLD1(FMAP2(x, y, x + y)));
 
+auto CAT    =  [](std::string other) {
+                    return PIPE([other](std::string left) {
+                        return left + other;
+                    });
+                };
 
-//-------------------------------------------------
-template <typename DATA>
-struct CC {
-    std::string content;
-    CC(DATA data) {
-        content = STR()(data);
-    }
+auto FOREACH   = [](auto fn) {
+                    return PIPE([fn](auto vet) {
+                        std::for_each(vet.begin(), vet.end(), fn);
+                    });
+                };
 
-    std::string operator()(std::string before) {
-        return before + content;
-    }
+auto INDEXOF   = [](auto value) {
+                    return PIPE([value](auto vet) {
+                        int index = 0;
+                        for (auto it = vet.begin(); it != vet.end(); it++, index++) {
+                            if (*it == value)
+                                return index;
+                        } 
+                        return -1;
+                    });
+                };
 
-    friend std::string operator | (std::string before, CC cc) {
-        return before + cc.content;
-    }
-};
+auto FOLD    =  [](auto fn, auto acc) {
+                    return PIPE([fn, acc](auto vet) mutable {
+                        for(const auto& item : vet)
+                            acc = fn(acc, item);
+                        return acc;
+                    });
+                };
+
+auto SUM     = FMAP(x, x | FOLD(FMAP2(x, y, x + y), 0));
+
+auto FOLD1   =  [](auto fn) {
+                    return PIPE([fn](auto vet) {
+                        auto first = vet.front();
+                        auto tail = vet | SLICE(1);
+                        return tail | FOLD(fn, first);
+                    });
+                };
 
 //-------------------------------------------------
 
