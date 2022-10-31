@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 #include <iostream>
 #include <sstream>
 #include <functional>
@@ -132,21 +133,6 @@ public:
 };
 
 //-------------------------------------------------
-struct CSTR {
-    static std::string data;
-    CSTR() {
-    }
-    const char * operator()(std::string content) {
-        CSTR::data = content;
-        return data.c_str();
-    }
-    friend const char * operator|(std::string content, CSTR cstr) {
-        return cstr(content);
-    }
-};
-std::string CSTR::data = "";
-
-//-------------------------------------------------
 template <typename PRINTABLE>
 struct ASSERT {
     PRINTABLE expected;
@@ -196,55 +182,7 @@ struct PIPE {
     }
 };
 
-//-------------------------------------------------
-//DEPRECATED
-#define LAMBDA(x, fx)           [](auto x){ return fx; }
-#define LAMBDAE(escopo, x, fx)  [escopo](auto x){ return fx; }
-
-//-------------------------------------------------
-#define FMAP(x, fx)             PIPE([] (auto x) { return fx; })
-#define FMAPE(x, fx)            PIPE([&](auto x) { return fx; })
-
-#define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
-#define FMAPE2(x, y, fxy)            [&](auto x, auto y) { return fxy; }
-
-//-------------------------------------------------
-struct PRINT {
-    std::string end;
-    PRINT(std::string end = "\n") : end(end) {}
-
-    template<typename DATA>
-    DATA operator()(DATA data) {
-        std::cout << STR()(data) << this->end;
-        return data;
-    }
-
-    template<typename DATA>
-    friend DATA operator|(DATA data, PRINT print) {
-        return print(data);
-    }
-};
-
 // -------------------------------------------------
-struct JOIN {
-    std::string separator;
-    std::string brakets;
-
-    JOIN(std::string separator = "", std::string brakets = "") : separator(separator), brakets(brakets) {
-    }
-
-    template <class CONTAINER>
-    std::string operator()(CONTAINER container) {
-        return STR().join(container, this->separator, this->brakets);
-    }
-
-    template <class CONTAINER>
-    friend std::string operator|(CONTAINER container, JOIN join) {
-        return join(container);
-    }
-};
-
-//-------------------------------------------------
 template<typename FUNCTION>
 struct MAP {
     FUNCTION fn;
@@ -262,21 +200,6 @@ struct MAP {
         return map(container);
     };
 };
-
-//-------------------------------------------------
-std::vector<int> IOTA(int init, int end, int step = 1) {
-    std::vector<int> aux;
-    if (step > 0) {
-        for (int i = init; i < end; i += step) {
-            aux.push_back(i);
-        }
-    } else {
-        for (int i = init; i > end; i += step) {
-            aux.push_back(i);
-        }
-    }
-    return aux;
-}
 
 //-------------------------------------------------
 class SLICE {
@@ -365,80 +288,6 @@ public:
 };
 
 //-------------------------------------------------
-struct TAKE {
-    int n;
-    TAKE(int n): n(n) {}
-
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container) {
-        if (n < 0)
-            return container | SLICE(n);
-        return container | SLICE(0, this->n);
-    }
-
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, TAKE take){
-        return take(container);
-    };
-};
-
-//-------------------------------------------------
-struct DROP {
-    int n;
-    DROP(int n): n(n) {}
-
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container) {
-        if (this->n < 0)
-            return container | SLICE(0, this->n);
-        return container | SLICE(this->n);
-    }
-
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, DROP drop){
-        return drop(container);
-    };
-};
-
-//-------------------------------------------------
-template<typename FUNCTION>
-struct FILTER {
-    FUNCTION fn;
-    FILTER(FUNCTION fn) : fn(fn) {}
-
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        auto aux = container | SLICE(0, 0);
-        std::copy_if(container.begin(), container.end(), std::back_inserter(aux), fn);
-        return aux;
-    };
-
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, FILTER<FUNCTION> filter){
-        return filter(container);
-    };
-};
-
-//-------------------------------------------------
-struct SPLIT {
-    char delimiter;
-    SPLIT(char delimiter=' ') : delimiter(delimiter) {}
-
-    std::vector<std::string> operator()(std::string str) {
-        std::vector<std::string> aux;
-        std::string token;
-        std::istringstream tokenStream(str);
-        while (std::getline(tokenStream, token, delimiter))
-            aux.push_back(token);
-        return aux;
-    }
-
-    friend std::vector<std::string> operator|(std::string str, SPLIT split) {
-        return split(str);
-    }
-};
-
-//-------------------------------------------------
 template <typename READABLE>
 struct STR2 {
     READABLE operator()(std::string value) {
@@ -484,102 +333,6 @@ struct TUPLEFY {
         return parse(line);
     }
 };
-
-//-------------------------------------------------
-template <typename FUNCTION>
-struct SORTBY {
-    FUNCTION fn;
-    SORTBY(FUNCTION fn): fn(fn) {}
-
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        auto aux = container | SLICE();
-        std::sort(aux.begin(), aux.end(), this->fn);
-        return aux;
-    };
-
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, SORTBY<FUNCTION> sortby){
-        return sortby(container);
-    };
-};
-
-// //-------------------------------------------------
-// template <typename FUNCTION, typename ACC>
-// struct FOLD {
-//     FUNCTION fn;
-//     ACC acc;
-
-//     FOLD(FUNCTION fn, ACC acc) : fn(fn), acc(acc){}
-
-//     template<typename CONTAINER>
-//     auto operator()(CONTAINER container){
-//         ACC output = this->acc;
-//         for (const auto& item : container)
-//             output = this->fn(output, item);
-//         return output;
-//     };
-
-//     template<typename CONTAINER>
-//     friend auto operator|(CONTAINER container, FOLD<FUNCTION, ACC> fold) {
-//         return fold(container);
-//     };
-// };
-
-// //-------------------------------------------------
-// template <typename FUNCTION>
-// struct FOLD1 {
-//     FUNCTION fn;
-//     FOLD1(FUNCTION fn) : fn(fn){}
-
-//     template<typename CONTAINER>
-//     auto operator()(CONTAINER container){
-//         auto front = container.front();
-//         return container | SLICE(1) | FOLD(this->fn, front);
-//     };
-
-//     template<typename CONTAINER>
-//     friend auto operator|(CONTAINER container, FOLD1<FUNCTION> fold){
-//         return fold(container);
-//     };
-// };
-
-//-------------------------------------------------
-// template<typename FUNCTION>
-// struct FOREACH {
-//     FUNCTION fn;
-//     FOREACH(FUNCTION fn) : fn(fn) {}
-    
-//     template<typename CONTAINER>
-//     void operator()(CONTAINER container){
-//         std::for_each(container.begin(), container.end(), this->fn);
-//     };
-
-//     template<typename CONTAINER>
-//     friend void operator|(CONTAINER container, FOREACH<FUNCTION> foreach){
-//         foreach(container);
-//     };
-// };
-
-//-------------------------------------------------
-// template<typename VALUE>
-// struct INDEXOF {
-//     VALUE value;
-//     INDEXOF(VALUE value) : value(value) {}
-
-//     template<typename CONTAINER>
-//     int operator()(CONTAINER container){
-//         auto it = std::find(container.begin(), container.end(), value);
-//         if (it == container.end())
-//             return -1;
-//         return std::distance(container.begin(), it);
-//     };
-
-//     template<typename CONTAINER>
-//     friend int operator|(CONTAINER container, INDEXOF<VALUE> find){
-//         return find(container);
-//     };
-// };
 
 //-------------------------------------------------
 template <typename CONTAINER>
@@ -723,7 +476,7 @@ public:
         auto vars = tuple_to_vector_str(controls);
         while(vars.size() < texts.size())
             vars.push_back("");
-        return texts | aux::ZIPWITH(vars, FMAP2(x, y, x + y)) | aux::JOIN(); 
+        return STR().join(texts | aux::ZIPWITH(vars, [](auto x, auto y) { return x + y;}), "", ""); 
     }
 
     friend std::string operator| (std::string fmt, FORMAT<Args...> mesh) {
@@ -731,6 +484,26 @@ public:
     }
 };
 
+//-------------------------------------------------
+#define FMAP(x, fx)             PIPE([] (auto x) { return fx; })
+#define FMAPE(x, fx)            PIPE([&](auto x) { return fx; })
+
+#define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
+#define FMAPE2(x, y, fxy)            [&](auto x, auto y) { return fxy; }
+
+std::vector<int> IOTA(int init, int end, int step = 1) {
+    std::vector<int> aux;
+    if (step > 0) {
+        for (int i = init; i < end; i += step) {
+            aux.push_back(i);
+        }
+    } else {
+        for (int i = init; i > end; i += step) {
+            aux.push_back(i);
+        }
+    }
+    return aux;
+}
 
 auto KEYS    = PIPE(MAP(FMAP(x, x.first)));
 auto VALUES  = PIPE(MAP(FMAP(x, x.second)));
@@ -738,47 +511,106 @@ auto SORT    = PIPE([](auto v) { auto z = v | SLICE(); std::sort(z.begin(), z.en
 auto REVERSE = PIPE([](auto v) { auto z = v | SLICE(); std::reverse(z.begin(), z.end()); return z;});
 auto SHUFFLE = PIPE([](auto v) { auto z = v | SLICE(); std::random_shuffle(z.begin(), z.end()); return z;});
 auto UNIQUE  = PIPE([](auto y) { auto v = y | SLICE(); std::sort(v.begin(), v.end()); v.erase(std::unique(v.begin(), v.end()), v.end()); return v;});
+auto CSTR    = PIPE([](std::string content) { static std::string data; data = content; return data.c_str(); });
 
-auto CAT    =  [](std::string other) {
-                    return PIPE([other](std::string left) {
-                        return left + other;
-                    });
-                };
+auto PRINT = [](std::string end = "\n") {
+    return PIPE([end](auto data) {
+        std::cout << STR()(data) << end;
+        return data;
+    });
+};
+
+auto FILTER =  [](auto fn) {
+    return PIPE([fn](auto container) {
+        auto aux = container | SLICE(0, 0);
+        std::copy_if(container.begin(), container.end(), std::back_inserter(aux), fn);
+        return aux;
+    });
+};
+
+auto SPLIT    = [](char delimiter = ' ') {
+    return PIPE([delimiter](std::string content) {
+        std::vector<std::string> aux;
+        std::string token;
+        std::istringstream tokenStream(content);
+        while (std::getline(tokenStream, token, delimiter))
+            aux.push_back(token);
+        return aux;
+    });
+};
+
+auto JOIN = [](std::string separator = "", std::string brakets = "") {
+    return PIPE([separator, brakets](auto container) {
+        return STR().join(container, separator, brakets);
+    });
+};
+
+auto TAKE = [](auto n) {
+    return PIPE([n](auto container) {
+        if (n < 0)
+            return container | SLICE(n);
+        return container | SLICE(0, n);
+    });
+};
+
+auto DROP    = [](auto n) {
+    return PIPE([n](auto container) {
+        if (n < 0)
+            return container | SLICE(0, n);
+        return container | SLICE(n);
+    });
+};
+
+auto SORTBY = [](auto fn) {
+    return PIPE([fn](auto vet) {
+        auto aux = vet | SLICE();
+        std::sort(aux.begin(), aux.end(), fn);
+        return aux;
+    });
+};
+
+auto CAT = [](std::string other) {
+    return PIPE([other](std::string left) {
+        return left + other;
+    });
+};
 
 auto FOREACH   = [](auto fn) {
-                    return PIPE([fn](auto vet) {
-                        std::for_each(vet.begin(), vet.end(), fn);
-                    });
-                };
+    return PIPE([fn](auto vet) {
+        std::for_each(vet.begin(), vet.end(), fn);
+    });
+};
 
-auto INDEXOF   = [](auto value) {
-                    return PIPE([value](auto vet) {
-                        int index = 0;
-                        for (auto it = vet.begin(); it != vet.end(); it++, index++) {
-                            if (*it == value)
-                                return index;
-                        } 
-                        return -1;
-                    });
-                };
+auto INDEXOF = [](auto value) {
+    return PIPE([value](auto vet) {
+        int index = 0;
+        for (auto it = vet.begin(); it != vet.end(); it++, index++) {
+            if (*it == value)
+                return index;
+        } 
+        return -1;
+    });
+};
 
-auto FOLD    =  [](auto fn, auto acc) {
-                    return PIPE([fn, acc](auto vet) mutable {
-                        for(const auto& item : vet)
-                            acc = fn(acc, item);
-                        return acc;
-                    });
-                };
+auto FOLD = [](auto fn, auto acc) {
+    return PIPE([fn, acc](auto vet) mutable {
+        for(const auto& item : vet)
+            acc = fn(acc, item);
+        return acc;
+    });
+};
 
 auto SUM     = FMAP(x, x | FOLD(FMAP2(x, y, x + y), 0));
 
 auto FOLD1   =  [](auto fn) {
-                    return PIPE([fn](auto vet) {
-                        auto first = vet.front();
-                        auto tail = vet | SLICE(1);
-                        return tail | FOLD(fn, first);
-                    });
-                };
+    return PIPE([fn](auto vet) {
+        auto first = vet.front();
+        auto tail = vet | SLICE(1);
+        return tail | FOLD(fn, first);
+    });
+};
+
+
 
 //-------------------------------------------------
 
