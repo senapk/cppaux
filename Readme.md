@@ -1,6 +1,12 @@
 # FAKEFN for c++
 
-
+Funções
+- iota(begin, end, inc = 1)
+- tostr(data, cfmt = "")
+- str2
+- format()
+- split 
+---------------------------------------
 - ASSERT(Printable)
   - Data<Printable> -> Data
 - PIPE(Lfn)
@@ -12,16 +18,13 @@
 	- container -> str
 	- tuple -> str
 	- pair -> str
-- FMT
-	- CONTAINER | TUPLE | PAIR -> str
+- FORMAT
+	- format | vararg 
 - STR
-	- data | STR() -> str
 	- data | STR(fmt) -> str
 ----------------------------------------
 - NETVET
 	- container -> vector empty 
-- TOVEC
-	- container -> vector
 ----------------------------------------
 - SLICE(init, end)
 	- container -> vector

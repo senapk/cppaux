@@ -183,10 +183,15 @@ struct ASSERT {
 };
 
 //-------------------------------------------------
+//guarda uma função de um único parametro para ser executada em pipeline
 template<typename FUNCTION> 
 struct PIPE {
     FUNCTION fn;
     PIPE(FUNCTION fn) : fn(fn) {}
+
+    PIPE& operator()() { 
+        return *this; 
+    }
 
     template<typename DATA>
     auto operator()(DATA data) { 
@@ -207,6 +212,7 @@ struct PIPE {
 //-------------------------------------------------
 #define FMAP(x, fx)             PIPE([] (auto x) { return fx; })
 #define FMAPE(x, fx)            PIPE([&](auto x) { return fx; })
+#define FMAPR(x, pre, ret)      PIPE([] (auto x) { pre; return ret; })
 
 #define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
 #define FMAPE2(x, y, fxy)            [&](auto x, auto y) { return fxy; }
@@ -218,7 +224,7 @@ struct PRINT {
 
     template<typename DATA>
     DATA operator()(DATA data) {
-        std::cout << data << this->end;
+        std::cout << STR()(data) << this->end;
         return data;
     }
 
@@ -247,107 +253,7 @@ struct JOIN {
     }
 };
 
-// //-------------------------------------------------
-// class FMT {
-//     std::string fmt;
-// public:
-//     FMT(std::string fmt = ""): fmt(fmt) {
-//     }
 
-//     static std::string format(std::string fmt, ...) {
-//         int size=100;
-//         std::string str;
-//         va_list ap;
-
-//         while (1) {
-//             str.resize(size);
-//             va_start(ap, fmt);
-//             int n = vsnprintf(&str[0], size, fmt.c_str(), ap);
-//             va_end(ap);
-    
-//             if (n > -1 && n < size) {
-//                 str.resize(n); // Make sure there are no trailing zero char
-//                 return str;
-//             }
-//             if (n > -1)
-//                 size = n + 1;
-//             else
-//                 size *= 2;
-//         }
-//     }
-
-//     template <class PRINTABLE>
-//     std::string operator()(PRINTABLE printable) {
-//         if(this->fmt == "")
-//             return STR()(printable);
-//         return FMT::format(this->fmt, printable);
-//     }
-
-//     template <class PRINTABLE>
-//     friend std::string operator|(PRINTABLE printable, FMT fmt) {
-//         return fmt(printable);
-//     }
-// };
-
-template<typename... Args>
-class FORMAT {
-    std::vector<std::string> to_vector_str(Args... args)
-    {
-        std::vector<std::string> result;
-        int dummy[] = {0, (result.push_back(STR()(args)), 0)...};
-        (void) dummy;
-        return result;
-    }
-
-public:
-    std::vector<std::string> data;
-
-    FORMAT(Args... args) {
-        this->data = to_vector_str(args...);
-    }
-
-    //o primeiro vector são os textos, o segundo os controles
-    //{} eh dia {%2d} {{}}
-    //[""]
-    // static std::pair<std::vector<std::string>, std::vector<std::string>> parse_controls(std::string format) {
-    //     std::vector<std::string> controls;
-    //     std::string output_fmt = "";
-
-    // }
-
-    std::string operator()(std::string fmt) {
-        std::stringstream output;
-        fmt = "_" + fmt + "_";
-        size_t lim = fmt.size() - 1;
-        size_t vi = 0;
-        size_t ci = 1;
-
-        auto entry_point = [&](int ci) {
-            return (fmt[ci] == '{') 
-                && (fmt[ci+1] == '}') 
-                && (vi < this->data.size());
-        };
-
-        while(ci < lim) {
-            if (entry_point(ci)) {
-                if (fmt[ci -1] == '{' && fmt[ci + 1] == '}' && fmt[ci + 2] == '}') {
-                    output << "}";
-                    ci += 3;
-                } else {
-                    output << this->data[vi++];
-                    ci += 2;
-                }
-            } else {
-                output << fmt[ci++];
-            }
-        }
-        return output.str();
-    }
-
-    friend std::string operator| (std::string fmt, FORMAT<Args...> mesh) {
-        return mesh(fmt);
-    }
-};
 
 //-------------------------------------------------
 template<typename FUNCTION>
@@ -596,66 +502,52 @@ struct TUPLEFY {
 };
 
 //-------------------------------------------------
-struct KEYS {
-    KEYS() {}
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        return container | MAP([](auto x) { return x.first; });
-    };
+// struct KEYS {
+//     KEYS() {}
+//     template<typename CONTAINER>
+//     auto operator()(CONTAINER container){
+//         return container | MAP([](auto x) { return x.first; });
+//     };
 
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, KEYS keys){
-        return keys(container);
-    };
-};
-
-//-------------------------------------------------
-struct VALUES {
-    VALUES() {}
-    template<typename CONTAINER>
-
-    auto operator()(CONTAINER container){
-        return container | MAP([](auto x) { return x.second; });
-    };
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, VALUES values){
-        return values(container);
-    };
-};
+//     template<typename CONTAINER>
+//     friend auto operator|(CONTAINER container, KEYS keys){
+//         return keys(container);
+//     };
+// };
 
 //-------------------------------------------------
-struct REVERSE {
-    REVERSE() {}
+// struct REVERSE {
+//     REVERSE() {}
 
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        auto aux = container | NEWVECFROM();
-        std::copy(container.rbegin(), container.rend(), std::back_inserter(aux));
-        return aux;
-    };
+//     template<typename CONTAINER>
+//     auto operator()(CONTAINER container){
+//         auto aux = container | NEWVECFROM();
+//         std::copy(container.rbegin(), container.rend(), std::back_inserter(aux));
+//         return aux;
+//     };
 
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, REVERSE reverse){
-        return reverse(container);
-    };
-};
+//     template<typename CONTAINER>
+//     friend auto operator|(CONTAINER container, REVERSE reverse){
+//         return reverse(container);
+//     };
+// };
 
 //-------------------------------------------------
-struct SORT {
-    SORT() {}
+// struct SORT {
+//     SORT() {}
 
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        auto aux = container | SLICE();
-        std::sort(aux.begin(), aux.end());
-        return aux;
-    };
+//     template<typename CONTAINER>
+//     auto operator()(CONTAINER container){
+//         auto aux = container | SLICE();
+//         std::sort(aux.begin(), aux.end());
+//         return aux;
+//     };
 
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, SORT sort){
-        return sort(container);
-    };
-};
+//     template<typename CONTAINER>
+//     friend auto operator|(CONTAINER container, SORT sort){
+//         return sort(container);
+//     };
+// };
 
 //-------------------------------------------------
 template <typename FUNCTION>
@@ -676,22 +568,22 @@ struct SORTBY {
     };
 };
 
-//-------------------------------------------------
-struct SHUFFLE {
-    SHUFFLE() {}
+// //-------------------------------------------------
+// struct SHUFFLE {
+//     SHUFFLE() {}
 
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        auto aux = container | SLICE();
-        std::random_shuffle(aux.begin(), aux.end());
-        return aux;
-    };
+//     template<typename CONTAINER>
+//     auto operator()(CONTAINER container){
+//         auto aux = container | SLICE();
+//         std::random_shuffle(aux.begin(), aux.end());
+//         return aux;
+//     };
 
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, SHUFFLE shuffle){
-        return shuffle(container);
-    };
-};
+//     template<typename CONTAINER>
+//     friend auto operator|(CONTAINER container, SHUFFLE shuffle){
+//         return shuffle(container);
+//     };
+// };
 
 //-------------------------------------------------
 template <typename FUNCTION, typename ACC>
@@ -733,20 +625,19 @@ struct FOLD1 {
 };
 
 //-------------------------------------------------
-struct SUM {
-    SUM() {}
+// struct SUM {
+//     SUM() {}
 
-    template<typename CONTAINER>
-    auto operator()(CONTAINER container){
-        return container | FOLD1([](auto acc, auto x) { return acc + x; });
-    };
+//     template<typename CONTAINER>
+//     auto operator()(CONTAINER container){
+//         return container | FOLD1([](auto acc, auto x) { return acc + x; });
+//     };
 
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, SUM sum){
-        return sum(container);
-    };
-
-};
+//     template<typename CONTAINER>
+//     friend auto operator|(CONTAINER container, SUM sum){
+//         return sum(container);
+//     };
+// };
 
 //-------------------------------------------------
 template<typename FUNCTION>
@@ -857,6 +748,92 @@ public:
         return ZIPWITH::join(container, zipwith.container, zipwith.fn);
     };
 };
+
+template<typename... Args>
+class FORMAT 
+{
+    std::tuple<Args...> args;
+
+    std::vector<std::string> tuple_to_vector_str(const std::vector<std::string>& controls)
+    {
+        std::vector<std::string> result;
+        std::apply
+        (
+            [&result, &controls](Args const&... tupleArgs)
+            {
+                int i = -1;
+                ((result.push_back(aux::STR(controls[++i])(tupleArgs))), ...);
+            }, this->args
+        );
+        return result;
+    }
+
+    std::pair<std::vector<std::string>, std::vector<std::string>> extract(std::string data)
+    {
+        data.append("_");
+        auto lim = data.size() - 1;
+        std::vector<std::string> texts = {""};
+        std::vector<std::string> ctrls = {""};
+        auto* destiny = &texts;
+
+        for (size_t i = 0; i < lim;) {
+            char c = data[i];
+            if ((c == '{' && data[i + 1] == '{') || (c == '}' && data[i + 1] == '}'))
+            {
+                destiny->back().append(std::string(1, c));
+                i += 2;
+            }
+            else if (c == '{') 
+            {
+                texts.push_back("");
+                destiny = &ctrls;
+                i++;
+            }
+            else if (c == '}') 
+            {
+                ctrls.push_back("");
+                destiny = &texts;
+                i++;
+            }
+            else
+            {
+                destiny->back().append(std::string(1,c));
+                i++;
+            }
+        }
+        while (texts.size() > ctrls.size())
+            ctrls.push_back("");
+        return {texts, ctrls};
+    }
+
+public:
+
+    FORMAT(Args ...args): args(std::forward<Args>(args)...)
+    {
+    }
+
+    std::string operator()(std::string fmt)
+    {
+        auto [texts, controls] = extract(fmt);
+        auto vars = tuple_to_vector_str(controls);
+        while(vars.size() < texts.size())
+            vars.push_back("");
+        return texts | aux::ZIPWITH(vars, FMAP2(x, y, x + y)) | aux::JOIN(); 
+    }
+
+    friend std::string operator| (std::string fmt, FORMAT<Args...> mesh) {
+        return mesh(fmt);
+    }
+};
+
+auto KEYS    = PIPE(MAP(FMAP(x, x.first)));
+auto VALUES  = PIPE(MAP(FMAP(x, x.second)));
+auto SORT    = PIPE([](auto v) { auto z = v | SLICE(); std::sort(z.begin(), z.end()); return z;});
+auto REVERSE = PIPE([](auto v) { auto z = v | SLICE(); std::reverse(z.begin(), z.end()); return z;});
+auto SHUFFLE = PIPE([](auto v) { auto z = v | SLICE(); std::random_shuffle(z.begin(), z.end()); return z;});
+auto UNIQUE  = PIPE([](auto y) { auto v = y | SLICE(); std::sort(v.begin(), v.end()); v.erase(std::unique(v.begin(), v.end()), v.end()); return v;});
+auto SUM     = FMAP(x, x | FOLD1(FMAP2(x, y, x + y)));
+
 
 //-------------------------------------------------
 template <typename DATA>
