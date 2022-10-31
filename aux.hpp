@@ -22,7 +22,7 @@ class STR {
 public:
 
     template <typename ...Args>
-    static std::string cformat(const std::string& format, Args && ...args)
+    static std::string cformat(const std::string& format, Args && ...args) 
     {
         auto size = std::snprintf(nullptr, 0, format.c_str(), std::forward<Args>(args)...);
         std::string output(size + 1, '\0');
@@ -32,110 +32,93 @@ public:
         return output;
     }
 
-    // static std::string cformat2(std::string fmt, ...) {
-    //     int size=100;
-    //     std::string str;
-    //     va_list ap;
-
-    //     while (1) {
-    //         str.resize(size);
-    //         va_start(ap, fmt);
-    //         int n = vsnprintf(&str[0], size, fmt.c_str(), ap);
-    //         va_end(ap);
-    
-    //         if (n > -1 && n < size) {
-    //             str.resize(n); // Make sure there are no trailing zero char
-    //             return str;
-    //         }
-    //         if (n > -1)
-    //             size = n + 1;
-    //         else
-    //             size *= 2;
-    //     }
-    // }
-
-    static std::string embrace(std::string data, std::string brakets) {
+    static std::string embrace(std::string data, std::string brakets) 
+    {
         auto prefix = brakets.size() > 0 ? std::string {brakets[0]} : "";
         auto suffix = brakets.size() > 1 ? std::string {brakets[1]} : "";
         return prefix + data + suffix;
     }
 
     template <class CONTAINER>
-    static std::string join(CONTAINER container, std::string separator = ", ", std::string brakets = "[]") {
+    std::string join(CONTAINER container, std::string separator = ", ", std::string brakets = "[]")
+    {
         if(container.size() == 0)
             return "";
         std::ostringstream ss;
         for (const auto& item : container)
-            ss << separator << STR()(item);
+            ss << separator << (*this)(item);
         auto output = ss.str().substr(separator.size());
         return STR::embrace(output, brakets);
     }
 
     template <typename... Ts>
-    static std::string join(std::tuple<Ts...> const &theTuple, std::string separator = ", ", std::string brakets = "[]") {
+    std::string join(std::tuple<Ts...> const &theTuple, std::string separator = ", ", std::string brakets = "()")
+    {
         std::stringstream ss;
         std::apply( [&](Ts const &...tupleArgs) {
                 std::size_t n{0};
-                ((ss << tupleArgs << (++n != sizeof...(Ts) ? separator : "")), ...);
+                ((ss << (*this)(tupleArgs) << (++n != sizeof...(Ts) ? separator : "")), ...);
             }, theTuple);
         return STR::embrace(ss.str(), brakets);
     }
 
     template<typename A, typename B>
-    static std::string join(std::pair<A, B> pair, std::string separator = ":", std::string brakets = "()") {
-        auto output =STR()(pair.first) + separator + STR()(pair.second);
+    std::string join(std::pair<A, B> pair, std::string separator = ", ", std::string brakets = "()")
+    {
+        auto output = (*this)(pair.first) + separator + (*this)(pair.second);
         return STR::embrace(output, brakets);
     }
 
     //-----------------------------------------------------
-    STR(std::string cfmt = ""): cfmt(cfmt){}
-
-    std::string operator()(std::string data) {
-        return data;
+    STR(std::string cfmt = ""): cfmt(cfmt){
     }
 
-    std::string operator()(const char * data) {
-        return std::string(data);
-    }
+    // std::string operator()(std::string data) {
+    //     return data;
+    // }
+
+    // std::string operator()(const char * data) {
+    //     return std::string(data);
+    // }
 
     template<typename A, typename B>
     std::string operator()(const std::pair<A, B>& pair) {
-        return STR::join(pair);
+        return this->join(pair);
     }
 
     template <typename... Ts>
     std::string operator()(std::tuple<Ts...> const &theTuple) {
-        return STR::join(theTuple);
+        return this->join(theTuple);
     }
 
     template <typename T>
     std::string operator()(const std::vector<T> &v) {
-        return STR::join(v);
+        return this->join(v);
     }
 
     template <typename T>
     std::string operator()(const std::list<T> &v) {
-        return STR::join(v);
+        return this->join(v);
     }
 
     template <typename T>
     std::string operator()(const std::set<T> &v) {
-        return STR::join(v);
+        return this->join(v);
     }
 
     template <typename T>
     std::string operator()(const std::unordered_set<T> &v) {
-        return STR::join(v);
+        return this->join(v);
     }
 
     template <typename K, typename T>
     std::string operator()(const std::map<K, T> &v) {
-        return STR::join(v);
+        return this->join(v);
     }
 
     template <typename K, typename T>
     std::string operator()(const std::unordered_map<K, T> &v) {
-        return STR::join(v);
+        return this->join(v);
     }
 
     template<typename PRINTABLE>
@@ -157,6 +140,21 @@ public:
 };
 
 //-------------------------------------------------
+struct CSTR {
+    static std::string data;
+    CSTR() {
+    }
+    const char * operator()(std::string content) {
+        CSTR::data = content;
+        return data.c_str();
+    }
+    friend const char * operator|(std::string content, CSTR cstr) {
+        return cstr(content);
+    }
+};
+std::string CSTR::data = "";
+
+//-------------------------------------------------
 template <typename PRINTABLE>
 struct ASSERT {
     PRINTABLE expected;
@@ -169,10 +167,10 @@ struct ASSERT {
     PRINTABLE operator()(PRINTABLE received){
 
         if (received != expected) {
-            std::cout << "ERROR: " << this->label 
-                      << "\n---------received----------\n\"" << STR()(received) 
-                      << "\"\n---------expected----------\n\"" << STR()(expected) 
-                      << "\"\n";
+            std::cout << "\n----------label------------\n" << this->label 
+                      << "\n---------received----------\n" << STR()(received) 
+                      << "\n---------expected----------\n" << STR()(expected) 
+                      << "\n---------------------------\n";
             exit(1);
         }
         return received;
@@ -240,7 +238,7 @@ struct JOIN {
 
     template <class CONTAINER>
     std::string operator()(CONTAINER container) {
-        return STR::join(container, this->separator, this->brakets);
+        return STR().join(container, this->separator, this->brakets);
     }
 
     template <class CONTAINER>
@@ -307,6 +305,15 @@ public:
     FORMAT(Args... args) {
         this->data = to_vector_str(args...);
     }
+
+    //o primeiro vector são os textos, o segundo os controles
+    //{} eh dia {%2d} {{}}
+    //[""]
+    // static std::pair<std::vector<std::string>, std::vector<std::string>> parse_controls(std::string format) {
+    //     std::vector<std::string> controls;
+    //     std::string output_fmt = "";
+
+    // }
 
     std::string operator()(std::string fmt) {
         std::stringstream output;
