@@ -505,22 +505,68 @@ std::vector<int> IOTA(int init, int end, int step = 1) {
     return aux;
 }
 
-auto KEYS    = PIPE(MAP(FMAP(x, x.first)));
-auto VALUES  = PIPE(MAP(FMAP(x, x.second)));
-auto SORT    = PIPE([](auto v) { auto z = v | SLICE(); std::sort(z.begin(), z.end()); return z;});
-auto REVERSE = PIPE([](auto v) { auto z = v | SLICE(); std::reverse(z.begin(), z.end()); return z;});
-auto SHUFFLE = PIPE([](auto v) { auto z = v | SLICE(); std::random_shuffle(z.begin(), z.end()); return z;});
-auto UNIQUE  = PIPE([](auto y) { auto v = y | SLICE(); std::sort(v.begin(), v.end()); v.erase(std::unique(v.begin(), v.end()), v.end()); return v;});
-auto CSTR    = PIPE([](std::string content) { static std::string data; data = content; return data.c_str(); });
+auto KEYS() {
+    return PIPE(MAP(FMAP(x, x.first)));
+}
 
-auto PRINT = [](std::string end = "\n") {
+auto VALUES() {
+    return PIPE(MAP(FMAP(x, x.second)));
+}
+
+auto SORT() {
+    return PIPE([](auto v) { 
+        auto z = v | SLICE(); 
+        std::sort(z.begin(), z.end()); 
+        return z;
+    });
+}
+
+auto REVERSE() {
+    return PIPE([](auto v) { 
+        auto z = v | SLICE(); 
+        std::reverse(z.begin(), z.end()); 
+        return z;
+    });
+}
+
+auto SHUFFLE() {
+    return PIPE([](auto v) { 
+        auto z = v | SLICE(); 
+        std::random_shuffle(z.begin(), z.end()); 
+        return z;
+    });
+}
+
+auto UNIQUE() {
+    return PIPE([](auto y) { 
+        auto v = y | SLICE();
+        std::sort(v.begin(), v.end()); 
+        v.erase(std::unique(v.begin(), v.end()), v.end()); 
+        return v;
+    });
+}
+
+
+auto CSTR() {
+    return PIPE([](std::string content) { 
+        static std::string data; 
+        data = content; 
+        return data.c_str(); 
+    });
+}
+
+auto PRINT(std::string end = "\n") {
     return PIPE([end](auto data) {
         std::cout << STR()(data) << end;
         return data;
     });
-};
+}
 
-auto FILTER =  [](auto fn) {
+
+
+
+template <class FUNCTION>
+auto FILTER(FUNCTION fn) {
     return PIPE([fn](auto container) {
         auto aux = container | SLICE(0, 0);
         std::copy_if(container.begin(), container.end(), std::back_inserter(aux), fn);
@@ -528,7 +574,7 @@ auto FILTER =  [](auto fn) {
     });
 };
 
-auto SPLIT    = [](char delimiter = ' ') {
+auto SPLIT(char delimiter = ' ') {
     return PIPE([delimiter](std::string content) {
         std::vector<std::string> aux;
         std::string token;
@@ -539,29 +585,30 @@ auto SPLIT    = [](char delimiter = ' ') {
     });
 };
 
-auto JOIN = [](std::string separator = "", std::string brakets = "") {
+auto JOIN(std::string separator = "", std::string brakets = "") {
     return PIPE([separator, brakets](auto container) {
         return STR().join(container, separator, brakets);
     });
 };
 
-auto TAKE = [](auto n) {
+auto TAKE(int n) {
     return PIPE([n](auto container) {
         if (n < 0)
             return container | SLICE(n);
         return container | SLICE(0, n);
     });
-};
+}
 
-auto DROP    = [](auto n) {
+auto DROP(int n) {
     return PIPE([n](auto container) {
         if (n < 0)
             return container | SLICE(0, n);
         return container | SLICE(n);
     });
-};
+}
 
-auto SORTBY = [](auto fn) {
+template <typename FUNCTION>
+auto SORTBY(FUNCTION fn) {
     return PIPE([fn](auto vet) {
         auto aux = vet | SLICE();
         std::sort(aux.begin(), aux.end(), fn);
@@ -569,19 +616,21 @@ auto SORTBY = [](auto fn) {
     });
 };
 
-auto CAT = [](std::string other) {
+auto CAT(std::string other) {
     return PIPE([other](std::string left) {
         return left + other;
     });
-};
+}
 
-auto FOREACH   = [](auto fn) {
+template <typename FUNCTION>
+auto FOREACH(FUNCTION fn) {
     return PIPE([fn](auto vet) {
         std::for_each(vet.begin(), vet.end(), fn);
     });
 };
 
-auto INDEXOF = [](auto value) {
+template <typename DATA>
+auto INDEXOF(DATA value) {
     return PIPE([value](auto vet) {
         int index = 0;
         for (auto it = vet.begin(); it != vet.end(); it++, index++) {
@@ -592,25 +641,30 @@ auto INDEXOF = [](auto value) {
     });
 };
 
-auto FOLD = [](auto fn, auto acc) {
+template <class FUNCTION, class DATA>
+auto FOLD(FUNCTION fn, DATA acc) {
     return PIPE([fn, acc](auto vet) mutable {
         for(const auto& item : vet)
             acc = fn(acc, item);
         return acc;
     });
-};
+}
 
-auto SUM     = FMAP(x, x | FOLD(FMAP2(x, y, x + y), 0));
+auto SUM() {
+    return PIPE([](auto container){
+        return container | FOLD([](auto x, auto y) {return x + y;}, 0);
+    });
+}
+    
 
-auto FOLD1   =  [](auto fn) {
+template <class FUNCTION>
+auto FOLD1(FUNCTION fn) {
     return PIPE([fn](auto vet) {
         auto first = vet.front();
         auto tail = vet | SLICE(1);
         return tail | FOLD(fn, first);
     });
-};
-
-
+}
 
 //-------------------------------------------------
 
