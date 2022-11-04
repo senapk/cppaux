@@ -7,6 +7,7 @@
 #include <cassert>
 #include <memory>
 #include <cstdarg>
+#include <optional>
 
 #include <set>
 #include <map>
@@ -15,7 +16,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace aux {
+namespace fn {
 
 //-------------------------------------------------
 class STR {
@@ -112,6 +113,11 @@ public:
     template <typename K, typename T>
     std::string operator()(const std::unordered_map<K, T> &v) {
         return this->join(v);
+    }
+
+    template <typename T>
+    std::string operator()(const std::optional<T> &v) {
+        return v ? (*this)(*v) : "None";
     }
 
     template<typename PRINTABLE>
@@ -420,7 +426,7 @@ class FORMAT
             [&result, &controls](Args const&... tupleArgs)
             {
                 int i = -1;
-                ((result.push_back(aux::STR(controls[++i])(tupleArgs))), ...);
+                ((result.push_back(STR(controls[++i])(tupleArgs))), ...);
             }, this->args
         );
         return result;
@@ -476,7 +482,7 @@ public:
         auto vars = tuple_to_vector_str(controls);
         while(vars.size() < texts.size())
             vars.push_back("");
-        return STR().join(texts | aux::ZIPWITH(vars, [](auto x, auto y) { return x + y;}), "", ""); 
+        return STR().join(texts | ZIPWITH(vars, [](auto x, auto y) { return x + y;}), "", ""); 
     }
 
     friend std::string operator| (std::string fmt, FORMAT<Args...> mesh) {
@@ -486,20 +492,18 @@ public:
 
 //-------------------------------------------------
 #define FMAP(x, fx)             PIPE([] (auto x) { return fx; })
-#define FMAPE(x, fx)            PIPE([&](auto x) { return fx; })
-
 #define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
-#define FMAPE2(x, y, fxy)            [&](auto x, auto y) { return fxy; }
 
 
 template <class T>
 auto IOTA(T init, int step = 1) {
-    return PIPE([init, step](auto container) mutable {
-        for (auto & value : container) {
-            value = init;
+    return PIPE([init, step](int size) mutable {
+        std::vector<T> aux;
+        for (int i = 0; i < size; i++) {
+            aux.push_back(init);
             init += step;
         }
-        return container;
+        return aux;
     });
 }
 
@@ -652,7 +656,15 @@ auto SUM() {
         return container | FOLD([](auto x, auto y) {return x + y;}, 0);
     });
 }
-    
+
+template <class FUNCTION>
+auto FINDIF(FUNCTION fn) {
+    return PIPE([fn](auto container) {
+        auto it = std::find_if(container.begin(), container.end(), fn);
+        auto identity = [](auto x) { return x; };
+        return it == container.end() ? std::nullopt : std::make_optional(identity(*it));
+    });
+}
 
 template <class FUNCTION>
 auto FOLD1(FUNCTION fn) {
@@ -663,36 +675,6 @@ auto FOLD1(FUNCTION fn) {
     });
 }
 
-//-------------------------------------------------
-
-
-using Chain = std::map<std::string, std::function<void()>>;
-using Param = std::vector<std::string>;
-
-void execute(Chain& chain, Param& ui) {
-    while(true) {
-        std::string line{}, cmd{};
-        std::getline(std::cin, line);
-        std::stringstream ss(line);
-        ss >> cmd;
-        ui = line | SPLIT(' ');
-        std::cout << "$" << line << '\n';
-        if (cmd == "end") {
-            break;
-        } else if (chain.count(cmd) != 0) {
-            try {
-                chain[cmd]();
-            } catch (std::string& e) {
-                std::cout << e << '\n';
-            }
-        } else {
-            std::cout << "fail: command not found\n";
-        }
-    }
-}
-
-
-
-} // namespace aux
+} // namespace fn
 
 
