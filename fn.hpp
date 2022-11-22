@@ -44,12 +44,11 @@ public:
     template <class CONTAINER>
     std::string join(CONTAINER container, std::string separator = ", ", std::string brakets = "[]")
     {
-        if(container.size() == 0)
-            return "";
         std::ostringstream ss;
-        for (const auto& item : container)
-            ss << separator << (*this)(item);
-        auto output = ss.str().substr(separator.size());
+        for (auto it = container.begin(); it != container.end(); ++it) {
+            ss << (it == container.begin() ? "" : separator) << (*this)(*it);
+        }
+        auto output = ss.str();
         return STR::embrace(output, brakets);
     }
 
@@ -676,5 +675,3 @@ auto FOLD1(FUNCTION fn) {
 }
 
 } // namespace fn
-
-

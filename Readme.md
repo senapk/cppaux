@@ -38,6 +38,21 @@ STR("%03d")(std::vector<int>{1,2,3,4,5})  // "[001, 002, 003, 004, 005]"
 ```py
 
 //----------------------------------------------------------
+//                       MAIN 
+//----------------------------------------------------------
+STR
+FORMAT
+JOIN
+MAP
+FILTER
+SPLIT
+PRINT
+STR2
+SLICE
+FMAP
+PIPE
+
+//----------------------------------------------------------
 //                       BASE 
 //----------------------------------------------------------
 
@@ -107,6 +122,23 @@ cont<a> | ZIPWITH(cont<b>, fn: (a,b)->c) -> vector<c>         // zipa dois conta
 
 ## Documentação
 
+Os exemplos de uso utilizam o modelo de formatação de string definido em:
+
+```cpp
+
+//esse include é obrigatório para rodar os exemplos para habilitar a criação
+//de strings utilizando o 
+using namespace std::string_literals;
+
+//por default, um literal texto é criado como um const char *
+//para criar uma string, basta adicionar um s no final do texto.
+
+auto a = "texto";              //const char *
+auto b = std::string("texto"); //std::string
+auto c = "texto"s;             //std::string
+
+```
+
 ### PRINT
 
 - Ação: Imprime o valor do objeto.
@@ -146,7 +178,10 @@ std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}}
 - Ação: Gera um vector com valores sequenciais.
 - Pipe: Tamanho do vector.
 - Args: Início da sequência e incremento(opcional).
-- Retorna: O vetor gerado que tem o tipo do init.
+- Retorna: O vetor gerado.
+- Detalhes: O tipo do vetor é deduzido pelo tipo do argumento inicial e o incremento é sempre um valor inteiro.
+
+```c++
 
 ```c++
 - size: int | IOTA(init: T, inc = 1) -> vector<T>
@@ -156,3 +191,18 @@ std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}}
 4
 ```
 
+### ASSERT
+
+- Ação: Dispara um warning caso o valor passado e esperado sejam diferentes.
+- Pipe: Valor a ser comparado.
+- Args: Valor esperado e mensagem de erro(opcional).
+- Retorna: O valor próprio valor passado pelo pipe.
+- Detalhes: Ambos os valores devem ser do mesmo tipo.
+
+```c++
+
+5        | STR() | ASSERT("5"s, "assert1"); 
+5.0f     | STR() | ASSERT("5"s, "assert2");
+5.123f   | STR() | ASSERT("5.123"s, "assert3");
+"banana" | ASSERT("banana", "assert4");
+```
