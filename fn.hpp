@@ -71,7 +71,7 @@ public:
     }
 
     //-----------------------------------------------------
-    STR(std::string cfmt = ""): cfmt(cfmt){
+    STR(std::string cfmt = ""): cfmt(cfmt) {
     }
 
     template<typename A, typename B>
@@ -147,7 +147,7 @@ struct ASSERT {
         this->label = label;
     }
 
-    PRINTABLE operator()(PRINTABLE received){
+    PRINTABLE operator()(PRINTABLE received) {
 
         if (received != expected) {
             std::cout << "\n----------label------------\n" << this->label 
@@ -159,7 +159,7 @@ struct ASSERT {
         return received;
     };
 
-    friend PRINTABLE operator|(PRINTABLE data, ASSERT<PRINTABLE> ass){
+    friend PRINTABLE operator|(PRINTABLE data, ASSERT<PRINTABLE> ass) {
         ass(data);
         return data;
     };
@@ -194,14 +194,14 @@ struct MAP {
     MAP(FUNCTION fn) : fn(fn) {}
 
     template<typename CONTAINER>
-    auto operator()(CONTAINER container){
+    auto operator()(CONTAINER container) {
         std::vector<decltype(fn(*container.begin()))> aux;
         std::transform(container.begin(), container.end(), std::back_inserter(aux), fn);
         return aux;
     };
 
     template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, MAP<FUNCTION> map){
+    friend auto operator|(CONTAINER container, MAP<FUNCTION> map) {
         return map(container);
     };
 };
@@ -344,7 +344,7 @@ template <typename CONTAINER>
 class ZIP {
 
     template<typename CONTAINER_A, typename CONTAINER_B>
-    static auto join(CONTAINER_A A, CONTAINER_B B){
+    static auto join(CONTAINER_A A, CONTAINER_B B) {
         auto fn = [](auto x) { return x; };
         using type_a = decltype(fn(*A.begin()));
         using type_b = decltype(fn(*B.begin()));
@@ -365,12 +365,12 @@ public:
     ZIP(CONTAINER container) : container(container) {}
 
     template<typename CONTAINER2>
-    auto operator()(CONTAINER2 other){
+    auto operator()(CONTAINER2 other) {
         return ZIP::join(this->container, other);
     };
 
     template<typename CONTAINER2>
-    friend auto operator|(CONTAINER2 container, ZIP<CONTAINER> zip){
+    friend auto operator|(CONTAINER2 container, ZIP<CONTAINER> zip) {
         return ZIP::join(container, zip.container);
     };
 };
@@ -380,7 +380,7 @@ template <typename CONTAINER, typename FUNCTION>
 class ZIPWITH {
     
     template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
-    static auto join(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin){
+    static auto join(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin) {
         auto idcopy = [](auto x) { return x; };
         using type_out = decltype( fnjoin( idcopy(*A.begin()), idcopy(*B.begin()) ));
         std::vector<type_out> aux;
@@ -402,12 +402,12 @@ public:
     ZIPWITH(CONTAINER container, FUNCTION fn) : container(container), fn(fn) {}
 
     template<typename CONTAINER2>
-    auto operator()(CONTAINER2 other){
+    auto operator()(CONTAINER2 other) {
         return ZIPWITH::join(this->container, other, this->fn);
     };
 
     template<typename CONTAINER2>
-    friend auto operator|(CONTAINER2 container, ZIPWITH<CONTAINER, FUNCTION> zipwith){
+    friend auto operator|(CONTAINER2 container, ZIPWITH<CONTAINER, FUNCTION> zipwith) {
         return ZIPWITH::join(container, zipwith.container, zipwith.fn);
     };
 };
@@ -651,7 +651,7 @@ auto FOLD(FUNCTION fn, DATA acc) {
 }
 
 auto SUM() {
-    return PIPE([](auto container){
+    return PIPE([](auto container) {
         return container | FOLD([](auto x, auto y) {return x + y;}, 0);
     });
 }
