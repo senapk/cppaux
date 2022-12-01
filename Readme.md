@@ -75,7 +75,7 @@ container<T> | JOIN(sep = "", brakets="") -> str      // concatena os elementos 
 
 text: str | STRTO<T>()                -> T             // transforma uma string em um tipo específico
 text: str | SPLIT(del=' ')           -> vector<str>   // dado um delimitador, separa em vetor de strings
-text: str | TUPLEFY<T...>(del)       -> tuple<T...>   // dado um delimitador, separa em uma tupla 
+text: str | UNPACK<T...>(del)       -> tuple<T...>   // dado um delimitador, separa em uma tupla 
 text: str | CSTR()                   -> const char *  // pega uma string gera um const char*
 
 //----------------------------------------------------------

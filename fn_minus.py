@@ -13,9 +13,21 @@ zip (ds1, ds2)
 zipwith(ds1, ds2, fn)
 format(text, args...)
 iota(size, init, step = 1)
-range(start, end, step = 1)
 
 input(istream)
+
+5 | RANGE() -> [0, 1, 2, 3, 4]
+range(5) -> [0, 1, 2, 3, 4]
+
+1 | RANGE(6) -> [1, 2, 3, 4, 5]
+range(1, 6) -> [1, 2, 3, 4, 5]
+
+1 | RANGE(6, 2) -> [1, 3, 5]
+range(1, 6, 2) -> [1, 3, 5]
+
+range(end)
+range(start, end, step = 1)
+
 
 strings
     input pra ler linha

@@ -18,16 +18,84 @@
 
 namespace fn {
 
-template<typename PRINTABLE>
+template<typename PRINTABLE> 
 std::string tostr(PRINTABLE data, std::string cfmt = "");
+auto        TOSTR(                std::string cfmt =  "");
 
-template <typename PRINTABLE>
+template <typename PRINTABLE> 
 PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "");
+template <typename PRINTABLE> 
+auto      ASSERTEQ(                    PRINTABLE expected, std::string label = "");
+
+template<typename CONTAINER>
+auto slice(CONTAINER container, int begin = 0);
+auto SLICE(                     int begin = 0);
+
+template<typename CONTAINER>
+auto slice(CONTAINER container, int begin, int end);
+auto SLICE(                     int begin, int end);
+
+template<typename CONTAINER, typename FUNCTION>
+auto map(CONTAINER container, FUNCTION fn);
+template <typename FUNCTION>
+auto MAP(                     FUNCTION fn);
+
+template<typename CONTAINER, typename FUNCTION>
+auto filter(CONTAINER container, FUNCTION fn);
+template <typename FUNCTION> 
+auto FILTER(                     FUNCTION fn);
+
+template <typename READABLE>
+READABLE strto(std::string value);
+template <typename READABLE>
+auto     STRTO();
+
+template <typename... TS>
+std::tuple<TS...> unpack(const std::string& line, char delimiter);
+template <typename... TS>
+auto              UNPACK(                         char delimiter);
+
+template<typename CONTAINER_A, typename CONTAINER_B>
+auto zip(CONTAINER_A A, CONTAINER_B B);
+template<typename CONTAINER_B>
+auto ZIP(               CONTAINER_B B);
+
+template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
+auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin);
+template<typename CONTAINER_B, typename FNJOIN>
+auto ZIPWITH(               CONTAINER_B B, FNJOIN fnjoin);
+
+template<typename... Args>
+std::string format(std::string fmt, Args ...args);
+template<typename... Args>
+auto        FORMAT(                 Args ...args);
+
+std::vector<int> range(int init, int end, int step = 1);
+auto             RANGE(          int end, int step = 1);
+
+std::vector<int> range(int end);
+auto             RANGE(       );
 
 template <typename PRINTABLE>
-auto ASSERTEQ(PRINTABLE expected, std::string label = "");
+PRINTABLE write(PRINTABLE data, std::string end = "\n");
+auto      WRITE(                std::string end = "\n");
+
+std::vector<std::string> split(std::string content, char delimiter = ' ');
+auto                     SPLIT(                     char delimiter = ' ');
+
+template <typename CONTAINER>
+std::string join(CONTAINER container, std::string separator = "", std::string brakets = "");
+auto        JOIN(                     std::string separator = "", std::string brakets = "");
+
 
 //-------------------------------------------------
+//-------------------------------------------------
+//-------------------------------------------------
+//-------------------------------------------------
+//-------------------------------------------------
+
+
+
 //guarda uma função de um único parametro para ser executada em pipeline ou invocada diretamente
 template<typename FUNCTION> 
 struct PIPE {
@@ -63,7 +131,7 @@ PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label) {
     return received;
 };
 
-template <typename PRINTABLE>
+template <typename PRINTABLE> 
 auto ASSERTEQ(PRINTABLE expected, std::string label) {
     return PIPE([expected, label](PRINTABLE received) {
         return asserteq(received, expected, label);
@@ -76,7 +144,7 @@ auto ASSERTEQ(PRINTABLE expected, std::string label) {
 #define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
 
 //-------------------------------------------------
-class TOSTR {
+class __TOSTR {
     std::string cfmt;
 public:
 
@@ -98,7 +166,7 @@ public:
         return prefix + data + suffix;
     }
 
-    template <class CONTAINER>
+    template <typename CONTAINER>
     std::string join(CONTAINER container, std::string separator = ", ", std::string brakets = "[]")
     {
         std::ostringstream ss;
@@ -106,7 +174,7 @@ public:
             ss << (it == container.begin() ? "" : separator) << (*this)(*it);
         }
         auto output = ss.str();
-        return TOSTR::embrace(output, brakets);
+        return __TOSTR::embrace(output, brakets);
     }
 
     template <typename... Ts>
@@ -117,18 +185,18 @@ public:
                 std::size_t n{0};
                 ((ss << (*this)(tupleArgs) << (++n != sizeof...(Ts) ? separator : "")), ...);
             }, theTuple);
-        return TOSTR::embrace(ss.str(), brakets);
+        return __TOSTR::embrace(ss.str(), brakets);
     }
 
     template<typename A, typename B>
     std::string join(std::pair<A, B> pair, std::string separator = ", ", std::string brakets = "()")
     {
         auto output = (*this)(pair.first) + separator + (*this)(pair.second);
-        return TOSTR::embrace(output, brakets);
+        return __TOSTR::embrace(output, brakets);
     }
 
     //-----------------------------------------------------
-    TOSTR(std::string cfmt = ""): cfmt(cfmt) {
+    __TOSTR(std::string cfmt = ""): cfmt(cfmt) {
     }
 
     template<typename A, typename B>
@@ -176,6 +244,11 @@ public:
         return v ? (*this)(*v) : "None";
     }
 
+    // template <typename T>
+    // std::string operator()(const std::optional<T> &v) {
+    //     return v ? (*this)(*v) : "None";
+    // }
+
     template<typename PRINTABLE>
     std::string operator()(PRINTABLE data) {
         if (this->cfmt == "") {
@@ -183,24 +256,24 @@ public:
             ss << data;
             return ss.str();
         } else {
-            return TOSTR::cformat(this->cfmt, data);
+            return __TOSTR::cformat(this->cfmt, data);
         }
-    }
-
-    //-----------------------------------------------------
-    template<typename PRINTABLE>
-    friend std::string operator|(PRINTABLE data, TOSTR obj) {
-        return obj(data);
     }
 };
 
 template<typename PRINTABLE>
 std::string tostr(PRINTABLE data, std::string cfmt) {
-    return TOSTR(cfmt)(data);
+    return __TOSTR(cfmt)(data);
 }
 
+auto TOSTR(std::string cfmt) {
+    return PIPE([cfmt](auto data) {
+        return __TOSTR(cfmt)(data);
+    });
+};
+
 //-------------------------------------------------
-class SLICE {
+class __SLICE {
     int begin;
     int end;
     bool from_begin {false};
@@ -228,12 +301,12 @@ class SLICE {
     }
 
 public:
-    SLICE(int begin = 0) {
+    __SLICE(int begin = 0) {
         this->from_begin = begin == 0;
         this->begin = begin;
         this->to_end = true;
     }
-    SLICE(int begin, int end) {
+    __SLICE(int begin, int end) {
         this->begin = begin;
         this->end = end;
         this->from_begin = false;
@@ -242,7 +315,7 @@ public:
 
     template<typename CONTAINER>
     auto operator()(CONTAINER container) {
-        auto aux = SLICE::new_vec_from(container);
+        auto aux = __SLICE::new_vec_from(container);
         
         //empty container
         if (!this->from_begin && !this->to_end && (this->begin == this->end)) {
@@ -274,32 +347,39 @@ public:
         std::copy(std::next(container.begin(), begin), std::next(container.begin(), end), std::back_inserter(aux));
         return aux;
     }
-
-    template<typename CONTAINER>
-    friend auto operator|(CONTAINER container, SLICE obj) {
-        return obj(container);
-    }
 };
 
 template<typename CONTAINER>
-auto slice(CONTAINER container, int begin = 0) {
-    return SLICE(begin)(container);
+auto slice(CONTAINER container, int begin) {
+    return __SLICE(begin)(container);
 }
 
 template<typename CONTAINER>
 auto slice(CONTAINER container, int begin, int end) {
-    return SLICE(begin, end)(container);
+    return __SLICE(begin, end)(container);
 }
 
+auto SLICE(int begin) {
+    return PIPE([begin](auto container) {
+        return __SLICE(begin)(container);
+    });
+};
+
+auto SLICE(int begin, int end) {
+    return PIPE([begin, end](auto container) {
+        return __SLICE(begin, end)(container);
+    });
+};
+
 // -------------------------------------------------
-template<typename CONTAINER, typename FN>
-auto map(CONTAINER container, FN fn) {
+template<typename CONTAINER, typename FUNCTION>
+auto map(CONTAINER container, FUNCTION fn) {
     std::vector<decltype(fn(*container.begin()))> aux;
     std::transform(container.begin(), container.end(), std::back_inserter(aux), fn);
     return aux;
 }
 
-template <class FUNCTION>
+template <typename FUNCTION>
 auto MAP(FUNCTION fn) {
     return PIPE([fn](auto container) {
         return map(container, fn);
@@ -308,8 +388,8 @@ auto MAP(FUNCTION fn) {
 
 //-------------------------------------------------
 
-template<typename CONTAINER, typename FN>
-auto filter(CONTAINER container, FN fn) {
+template<typename CONTAINER, typename FUNCTION>
+auto filter(CONTAINER container, FUNCTION fn) {
     auto aux = slice(container, 0, 0);
     for(auto& x : container) {
         if(fn(x))
@@ -318,7 +398,7 @@ auto filter(CONTAINER container, FN fn) {
     return aux;
 }
 
-template <class FUNCTION>
+template <typename FUNCTION>
 auto FILTER(FUNCTION fn) {
     return PIPE([fn](auto container) {
         return filter(container, fn);
@@ -338,7 +418,7 @@ READABLE strto(std::string value) {
     return aux;
 }
 
-template <class READABLE>
+template <typename READABLE>
 auto STRTO() {
     return PIPE([](std::string value) {
         return strto<READABLE>(value);
@@ -347,11 +427,11 @@ auto STRTO() {
 
 //-------------------------------------------------
 template <typename... Types>
-struct TUPLEFY {
+struct __UNPACK {
     char delimiter;
-    TUPLEFY(char delimiter) : delimiter(delimiter) {}
+    __UNPACK(char delimiter) : delimiter(delimiter) {}
 
-    template<class Head, class... Tail>
+    template<typename Head, typename... Tail>
     std::tuple<Head, Tail...> tuple_read_impl(std::istream& is, char delimiter) {
         Head val;
         std::string token;
@@ -369,15 +449,19 @@ struct TUPLEFY {
         return tuple_read_impl<Types...>(ss, this->delimiter);
     }
 
-    friend std::tuple<Types...> operator|(const std::string& line, TUPLEFY<Types...> parse) {
-        return parse(line);
-    }
 };
 
 template <typename... TS>
-std::tuple<TS...> tuplefy(const std::string& line, char delimiter) {
-    return TUPLEFY<TS...>(delimiter)(line);
+std::tuple<TS...> unpack(const std::string& line, char delimiter) {
+    return __UNPACK<TS...>(delimiter)(line);
 }
+
+template <typename... TS>
+auto UNPACK(char delimiter) {
+    return PIPE([delimiter](std::string line) {
+        return __UNPACK<TS...>(delimiter)(line);
+    });
+};
 
 //-------------------------------------------------
 
@@ -398,8 +482,8 @@ auto zip(CONTAINER_A A, CONTAINER_B B) {
     return aux;
 };
 
-template<typename CONTAINER>
-auto ZIP(CONTAINER B) {
+template<typename CONTAINER_B>
+auto ZIP(CONTAINER_B B) {
     return PIPE([B](auto A) {
         return zip(A, B);
     });
@@ -423,17 +507,17 @@ auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin) {
     return aux;
 };
 
-template<typename CONTAINER, typename FNJOIN>
-auto ZIPWITH(CONTAINER B, FNJOIN fn) {
-    return PIPE([B, fn](auto A) {
-        return zipwith(A, B, fn);
+template<typename CONTAINER_B, typename FNJOIN>
+auto ZIPWITH(CONTAINER_B B, FNJOIN fnjoin) {
+    return PIPE([B, fnjoin](auto A) {
+        return zipwith(A, B, fnjoin);
     });
 };
 
 //-------------------------------------------------
 
 template<typename... Args>
-class FORMAT 
+class __FORMAT 
 {
     std::tuple<Args...> args;
 
@@ -491,7 +575,7 @@ class FORMAT
 
 public:
 
-    FORMAT(Args ...args): args(std::forward<Args>(args)...)
+    __FORMAT(Args ...args): args(std::forward<Args>(args)...)
     {
     }
 
@@ -501,64 +585,55 @@ public:
         auto vars = tuple_to_vector_str(controls);
         while(vars.size() < texts.size())
             vars.push_back("");
-        return TOSTR().join(texts | ZIPWITH(vars, [](auto x, auto y) { return x + y;}), "", ""); 
-    }
-
-    friend std::string operator| (std::string fmt, FORMAT<Args...> mesh) {
-        return mesh(fmt);
+        return __TOSTR().join(texts | ZIPWITH(vars, [](auto x, auto y) { return x + y;}), "", ""); 
     }
 };
 
 template<typename... Args>
 std::string format(std::string fmt, Args ...args) {
-    return fmt | FORMAT<Args...>(args...);
+    return __FORMAT<Args...>(args...)(fmt);
 }
+
+template<typename... Args>
+auto FORMAT(Args ...args) {
+    return PIPE([args...](std::string fmt) {
+        return __FORMAT<Args...>(args...)(fmt);
+    });
+};
 
 //-------------------------------------------------
 
-template <class T>
-std::vector<T> range(T init, T end, int step = 1) {
+std::vector<int> range(int init, int end, int step) {
     if (step == 0)
         throw std::invalid_argument("step cannot be zero");
-    std::vector<T> aux;
+    std::vector<int> aux;
     if (step > 0) {
-        for (T i = init; i < end; i += step) {
+        for (int i = init; i < end; i += step) {
             aux.push_back(i);
         }
     } else {
-        for (T i = init; i > end; i += step) {
+        for (int i = init; i > end; i += step) {
             aux.push_back(i);
         }
     }
     return aux;
 }
 
-template <class T>
-std::vector<T> range(T end) {
+auto RANGE(int end, int step) {
+    return PIPE([end, step](int init) {
+        return range(init, end, step);
+    });
+};
+
+std::vector<int> range(int end) {
     return range(0, end, 1);
 }
 
-//-------------------------------------------------
-
-template <class T>
-std::vector<T> iota(int size, T init, int step = 1) {
-    if (step == 0)
-        throw std::invalid_argument("step cannot be zero");
-    std::vector<T> aux;
-    for (int i = 0; i < size; i++) {
-        aux.push_back(init);
-        init += step;
-    }
-    return aux;
-}
-
-template <class T>
-auto IOTA(T init, int step = 1) {
-    return PIPE([init, step](int size) mutable {
-        return iota(size, init, step);
+auto RANGE() {
+    return PIPE([](int end) {
+        return range(0, end, 1);
     });
-}
-
+};
 
 //-------------------------------------------------
 
@@ -590,7 +665,7 @@ auto WRITE(std::string end = "\n") {
 
 //-------------------------------------------------
 
-std::vector<std::string> split(std::string content, char delimiter = ' ') {
+std::vector<std::string> split(std::string content, char delimiter) {
     std::vector<std::string> aux;
     std::string token;
     std::istringstream tokenStream(content);
@@ -599,7 +674,7 @@ std::vector<std::string> split(std::string content, char delimiter = ' ') {
     return aux;
 }
 
-auto SPLIT(char delimiter = ' ') {
+auto SPLIT(char delimiter) {
     return PIPE([delimiter](std::string content) {
         return split(content, delimiter);
     });
@@ -608,11 +683,11 @@ auto SPLIT(char delimiter = ' ') {
 //-------------------------------------------------
 
 template <typename CONTAINER>
-std::string join(CONTAINER container, std::string separator = "", std::string brakets = "") {
-    return TOSTR().join(container, separator, brakets);
+std::string join(CONTAINER container, std::string separator, std::string brakets) {
+    return __TOSTR().join(container, separator, brakets);
 }
 
-auto JOIN(std::string separator = "", std::string brakets = "") {
+auto JOIN(std::string separator, std::string brakets) {
     return PIPE([separator, brakets](auto container) {
         return join(container, separator, brakets);
     });
