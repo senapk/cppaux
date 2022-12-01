@@ -20,7 +20,7 @@ namespace fn {
 
 template<typename PRINTABLE> 
 std::string tostr(PRINTABLE data, std::string cfmt = "");
-auto        TOSTR(                std::string cfmt =  "");
+auto        TOSTR(                std::string cfmt = "");
 
 template <typename PRINTABLE> 
 PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "");
@@ -87,6 +87,8 @@ template <typename CONTAINER>
 std::string join(CONTAINER container, std::string separator = "", std::string brakets = "");
 auto        JOIN(                     std::string separator = "", std::string brakets = "");
 
+std::string input(std::istream & is = std::cin);
+auto        INPUT();
 
 //-------------------------------------------------
 //-------------------------------------------------
@@ -244,10 +246,14 @@ public:
         return v ? (*this)(*v) : "None";
     }
 
-    // template <typename T>
-    // std::string operator()(const std::optional<T> &v) {
-    //     return v ? (*this)(*v) : "None";
-    // }
+    std::string operator()(const std::string &v) {
+        if (cfmt.size() > 0) {
+            static std::string dummy;
+            dummy = v;
+            return __TOSTR::cformat(cfmt, v.c_str());
+        }
+        return v;
+    }
 
     template<typename PRINTABLE>
     std::string operator()(PRINTABLE data) {
@@ -414,8 +420,7 @@ READABLE strto(std::string value) {
     if (iss >> aux) {
         return aux;
     }
-    std::cout << "fail: conversão de \"" << value << "\" " << std::endl;
-    return aux;
+    throw std::runtime_error("strto: invalid conversion from " + value);
 }
 
 template <typename READABLE>
@@ -605,7 +610,7 @@ auto FORMAT(Args ...args) {
 
 std::vector<int> range(int init, int end, int step) {
     if (step == 0)
-        throw std::invalid_argument("step cannot be zero");
+        throw std::runtime_error("step cannot be zero");
     std::vector<int> aux;
     if (step > 0) {
         for (int i = init; i < end; i += step) {
@@ -637,27 +642,13 @@ auto RANGE() {
 
 //-------------------------------------------------
 
-const char * cstr(std::string content) {
-    static std::string data; 
-    data = content; 
-    return data.c_str(); 
-}
-
-auto CSTR() {
-    return PIPE([](std::string content) { 
-        return cstr(content);
-    });
-}
-
-//-------------------------------------------------
-
 template <typename PRINTABLE>
-PRINTABLE write(PRINTABLE data, std::string end = "\n") {
+PRINTABLE write(PRINTABLE data, std::string end) {
     std::cout << tostr(data) << end;
     return data;
 }
 
-auto WRITE(std::string end = "\n") {
+auto WRITE(std::string end) {
     return PIPE([end](auto data) {
         return write(data, end);
     });
@@ -693,4 +684,25 @@ auto JOIN(std::string separator, std::string brakets) {
     });
 };
 
+//-------------------------------------------------
+
+std::string input(std::istream & is) {
+    std::string line;
+    if (std::getline(is, line))
+        return line;
+    throw std::runtime_error("input empty");
+}
+
+auto INPUT() {
+    return PIPE([](std::istream is) {
+        return input(is);
+    });
+};
+
 } // namespace fn
+
+using namespace std::string_literals;
+
+double operator+(std::string text) {
+    return fn::strto<double>(text);
+}

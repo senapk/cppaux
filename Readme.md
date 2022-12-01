@@ -11,112 +11,51 @@
 
 ## Como utilizar
 
-- TODAS as funções dessa biblioteca são **functors**, ou seja, objetos que podem ser chamados como funções.
-- Os objetos são criados por meio de um construtor e podem ser chamados como funções ou via pipe |.
-- Por exemplo, a função TOSTR que é utilizada para gerar a string de um objeto, pode ser chamada como função ou via pipe.
-
-```cpp
-//como função, esse primeiro par de parênteses é obrigatório
-TOSTR()(5.7) // "5.7"
-TOSTR()(std::vector<int>{1,2,3,4,5}) // "[1, 2, 3, 4, 5]"
-//ou
-5.7 | TOSTR() // "5.7"
-std::vector<int>{1,2,3,4,5} | TOSTR() // "[1, 2, 3, 4, 5]"
-
-//se for passado algum parâmetro para o TOSTR(), 
-//ele utiliza para formatação usando as regras do printf
-5.7 | TOSTR("%.2f") // "5.70"
-TOSTR("%.3f")(5.7) // "5.700"
-
-//se aplicado a algum container, ele aplica a função para cada elemento
-std::vector<int>{1,2,3,4,5} | TOSTR("%03d") // "[001, 002, 003, 004, 005]"
-TOSTR("%03d")(std::vector<int>{1,2,3,4,5})  // "[001, 002, 003, 004, 005]"
-```
-
 ## Resumo
 
 ```py
 
 //----------------------------------------------------------
-//                       MAIN 
-//----------------------------------------------------------
-TOSTR
-FORMAT
-JOIN
-MAP
-FILTER
-SPLIT
-WRITE
-STRTO
-SLICE
-FMAP
-PIPE
-
-//----------------------------------------------------------
 //                       BASE 
 //----------------------------------------------------------
 
-data: T   | WRITE(end="\n")               -> T        // imprime um conteúdo
-data: T   | ASSERTEQ(expected: T, label="") -> T        // verifica de dois valores são iguais
-data: T   | PIPE(fn: T -> K)              -> K        // empacota uma função num PIPE
-size: int | RANGE(init: T, inc = 1)        -> vector<T>// gera um vetor sequencial
+write(data: DATA, end = "\n")        -> DATA   // imprime um conteúdo
+input(fluxo = cin)                   -> str    // lê linha inteira
+range(end: int)                      -> [int]  // vetor de [0, end[, não inclui o end
+range(init: int, end: int, step = 1) -> [int]  // vetor de [init, end[, não inclui o end
+operator+(token: str)                -> double // transforma string em double
+"nome"s                              -> str    // transforma raw string em string
 //----------------------------------------------------------
 //                   PARA STRINGS
 //----------------------------------------------------------
 
-data: any    | TOSTR(cfmt="")               -> str      // converte qualquer coisa para string e formata
-fmt : str    | FORMAT(args...)            -> str      // formata uma string com printf
-text: str    | CAT(text: str)             -> str      // concatena duas strings
-container<T> | JOIN(sep = "", brakets="") -> str      // concatena os elementos de um container 
+tostr (data: DATA, cfmt = "")                   -> str   // converte qualquer coisa para string e formata
+format(fmt: str, Args ...args)                  -> str   // formata uma string usando {} e printf
+join  (container, separator = "", brakets = "") -> str   // concatena os elementos de um container 
 
 //----------------------------------------------------------
 //                  DE STRINGS
 //----------------------------------------------------------
 
-text: str | STRTO<T>()                -> T             // transforma uma string em um tipo específico
-text: str | SPLIT(del=' ')           -> vector<str>   // dado um delimitador, separa em vetor de strings
-text: str | UNPACK<T...>(del)       -> tuple<T...>   // dado um delimitador, separa em uma tupla 
-text: str | CSTR()                   -> const char *  // pega uma string gera um const char*
+strto <TYPE> (value: str)                    -> TYPE                // dado tipo, converte string para esse tipo
+unpack<TS...>(line: str, delimiter: char)    -> std::tuple<TS...>;  // dado tipos e delimitador, separa em uma tupla 
+split        (content: str, delimiter = ' ') -> [str]               // dado um delimitador, separa em vetor de strings
 
 //----------------------------------------------------------
-//             container<T> -> vector<T>  
+//             filter, map, slice  
 //----------------------------------------------------------
 
-cont<T> | FILTER(fn: T -> bool)      -> vector<T>     // filtra os elementos que satisfazem a função
-cont<T> | SLICE(init, end)           -> vector<T>     // copia uma parte do vetor
-cont<T> | DROP(qtd)                  -> vector<T>     // remove os primeiros elementos
-cont<T> | TAKE(qtd)                  -> vector<T>     // pega os primeiros elementos
-cont<T> | REVERSE()                  -> vector<T>     // inverte a ordem dos elementos
-cont<T> | SHUFFLE()                  -> vector<T>     // embaralha os elementos
-cont<T> | SORT()                     -> vector<T>     // ordena os elementos
-cont<T> | SORTBY(fn)                 -> vector<T>     // ordena os elementos com base em uma função
-cont<T> | UNIQUE()                   -> vector<T>     // remove elementos duplicados
-
-//----------------------------------------------------------
-//             cont<T> -> vector<K>
-//----------------------------------------------------------
-
-cont<a>        | MAP(fn: a -> b)     -> vector<b>     // aplica uma função em todos os elementos
-cont<pair<a,b>>| KEYS()              -> vector<a>     // pega as chaves de um cont de pares
-cont<pair<a,b>>| VALUES()            -> vector<b>     // pega os valores de um cont de pares
-
-//----------------------------------------------------------
-//             cont para valor
-//----------------------------------------------------------
-       
-cont<a> | INDEXOF(value: a)            -> int         // retorna o índice de um elemento ou -1
-cont<a> | FOLD(fn: (b,a) -> b, acc: b) -> b           // aplica uma função acumulativa dado valor inicial
-cont<a> | FOLD1(fn: (a,a) -> a)        -> a           // aplica uma função acumulativa
-cont<a> | SUM()                        -> a           // soma todos os elementos
-cont<a> | FOREACH(fn: a -> void)       -> void        // aplica uma função em todos os elementos
-cont<a> | FINDIF(fn: a -> bool)        -> optional<a> // retorna o primeiro elemento que satisfaz a função
+filter(container<a>, fn: (a -> bool))      -> [a]       // filtra os elementos que satisfazem a função
+map   (container<a>, fn: (a -> b   ))      -> [b]       // aplica uma função em todos os elementos
+slice (container<a>, begin = 0)            -> [a]       // copia de begin até o final
+slice (container<a>, begin: int, end: int) -> [a];      // copia de begin até end
 
 //----------------------------------------------------------
 //             ZIP
 //----------------------------------------------------------
 
-cont<a> | ZIP    (cont<b>)               -> vector<pair<a,b>> // zipa dois containers em um cont de pares
-cont<a> | ZIPWITH(cont<b>, fn: (a,b)->c) -> vector<c>         // zipa dois containers usando uma função
+zip    (cont<a>, cont<b>)              -> [(a,b)] // zipa dois containers em um cont de pares
+zipwith(cont<a>, cont<b>, fn: (a,b->c) -> [c]         // zipa dois containers usando uma função
 
 ```
 
@@ -125,10 +64,6 @@ cont<a> | ZIPWITH(cont<b>, fn: (a,b)->c) -> vector<c>         // zipa dois conta
 Os exemplos de uso utilizam o modelo de formatação de string definido em:
 
 ```cpp
-
-//esse include é obrigatório para rodar os exemplos para habilitar a criação
-//de strings utilizando o 
-using namespace std::string_literals;
 
 //por default, um literal texto é criado como um const char *
 //para criar uma string, basta adicionar um s no final do texto.

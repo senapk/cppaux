@@ -78,13 +78,6 @@ auto CAT(CONTAINER other) {
     });
 }
 
-template <typename FUNCTION>
-auto FOREACH(FUNCTION fn) {
-    return PIPE([fn](auto vet) {
-        std::for_each(vet.begin(), vet.end(), fn);
-    });
-};
-
 template <typename DATA>
 auto INDEXOF(DATA value) {
     return PIPE([value](auto vet) {
