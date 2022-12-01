@@ -5,32 +5,32 @@
 - [Como utilizar as biblioteca](#como-utilizar-as-biblioteca)
 - [Resumo](#resumo)
 - [Documentação](#documentação)
-  - [PRINT](#print)
-  - [IOTA](#iota)
+  - [WRITE](#print)
+  - [RANGE](#iota)
 [](toc)
 
 ## Como utilizar
 
 - TODAS as funções dessa biblioteca são **functors**, ou seja, objetos que podem ser chamados como funções.
 - Os objetos são criados por meio de um construtor e podem ser chamados como funções ou via pipe |.
-- Por exemplo, a função STR que é utilizada para gerar a string de um objeto, pode ser chamada como função ou via pipe.
+- Por exemplo, a função TOSTR que é utilizada para gerar a string de um objeto, pode ser chamada como função ou via pipe.
 
 ```cpp
 //como função, esse primeiro par de parênteses é obrigatório
-STR()(5.7) // "5.7"
-STR()(std::vector<int>{1,2,3,4,5}) // "[1, 2, 3, 4, 5]"
+TOSTR()(5.7) // "5.7"
+TOSTR()(std::vector<int>{1,2,3,4,5}) // "[1, 2, 3, 4, 5]"
 //ou
-5.7 | STR() // "5.7"
-std::vector<int>{1,2,3,4,5} | STR() // "[1, 2, 3, 4, 5]"
+5.7 | TOSTR() // "5.7"
+std::vector<int>{1,2,3,4,5} | TOSTR() // "[1, 2, 3, 4, 5]"
 
-//se for passado algum parâmetro para o STR(), 
+//se for passado algum parâmetro para o TOSTR(), 
 //ele utiliza para formatação usando as regras do printf
-5.7 | STR("%.2f") // "5.70"
-STR("%.3f")(5.7) // "5.700"
+5.7 | TOSTR("%.2f") // "5.70"
+TOSTR("%.3f")(5.7) // "5.700"
 
 //se aplicado a algum container, ele aplica a função para cada elemento
-std::vector<int>{1,2,3,4,5} | STR("%03d") // "[001, 002, 003, 004, 005]"
-STR("%03d")(std::vector<int>{1,2,3,4,5})  // "[001, 002, 003, 004, 005]"
+std::vector<int>{1,2,3,4,5} | TOSTR("%03d") // "[001, 002, 003, 004, 005]"
+TOSTR("%03d")(std::vector<int>{1,2,3,4,5})  // "[001, 002, 003, 004, 005]"
 ```
 
 ## Resumo
@@ -40,14 +40,14 @@ STR("%03d")(std::vector<int>{1,2,3,4,5})  // "[001, 002, 003, 004, 005]"
 //----------------------------------------------------------
 //                       MAIN 
 //----------------------------------------------------------
-STR
+TOSTR
 FORMAT
 JOIN
 MAP
 FILTER
 SPLIT
-PRINT
-STR2
+WRITE
+STRTO
 SLICE
 FMAP
 PIPE
@@ -56,15 +56,15 @@ PIPE
 //                       BASE 
 //----------------------------------------------------------
 
-data: T   | PRINT(end="\n")               -> T        // imprime um conteúdo
-data: T   | ASSERT(expected: T, label="") -> T        // verifica de dois valores são iguais
+data: T   | WRITE(end="\n")               -> T        // imprime um conteúdo
+data: T   | ASSERTEQ(expected: T, label="") -> T        // verifica de dois valores são iguais
 data: T   | PIPE(fn: T -> K)              -> K        // empacota uma função num PIPE
-size: int | IOTA(init: T, inc = 1)        -> vector<T>// gera um vetor sequencial
+size: int | RANGE(init: T, inc = 1)        -> vector<T>// gera um vetor sequencial
 //----------------------------------------------------------
 //                   PARA STRINGS
 //----------------------------------------------------------
 
-data: any    | STR(cfmt="")               -> str      // converte qualquer coisa para string e formata
+data: any    | TOSTR(cfmt="")               -> str      // converte qualquer coisa para string e formata
 fmt : str    | FORMAT(args...)            -> str      // formata uma string com printf
 text: str    | CAT(text: str)             -> str      // concatena duas strings
 container<T> | JOIN(sep = "", brakets="") -> str      // concatena os elementos de um container 
@@ -73,7 +73,7 @@ container<T> | JOIN(sep = "", brakets="") -> str      // concatena os elementos 
 //                  DE STRINGS
 //----------------------------------------------------------
 
-text: str | STR2<T>()                -> T             // transforma uma string em um tipo específico
+text: str | STRTO<T>()                -> T             // transforma uma string em um tipo específico
 text: str | SPLIT(del=' ')           -> vector<str>   // dado um delimitador, separa em vetor de strings
 text: str | TUPLEFY<T...>(del)       -> tuple<T...>   // dado um delimitador, separa em uma tupla 
 text: str | CSTR()                   -> const char *  // pega uma string gera um const char*
@@ -139,7 +139,7 @@ auto c = "texto"s;             //std::string
 
 ```
 
-### PRINT
+### WRITE
 
 - Ação: Imprime o valor do objeto.
 - Pipe: qualquer variável ou container a ser impressa.
@@ -147,33 +147,33 @@ auto c = "texto"s;             //std::string
 - Retorna: a própria variável que foi passada pelo pipe.
 
 ```c++
-data: T | PRINT(end="\n") -> T
+data: T | WRITE(end="\n") -> T
 ```
 
 ```c++
 
 // funciona com primitivos
-5 | PRINT(); //5
-4.5 | PRINT(); //4.5
+5 | WRITE(); //5
+4.5 | WRITE(); //4.5
 
 // e quaisquer combinação de containers e tipos primitivos
-std::vector<int>{1,2,3}         | PRINT(); //[1, 2, 3]
-std::list<float>{1.5,2.5, 3.5}  | PRINT(); //[1.5, 2.5, 3.5]
-std::make_pair("ovo", "queijo") | PRINT(); //(ovo, queijo)
-std::make_tuple(1,2.3,"tres")   | PRINT(); //(1, 2.3, tres)
+std::vector<int>{1,2,3}         | WRITE(); //[1, 2, 3]
+std::list<float>{1.5,2.5, 3.5}  | WRITE(); //[1.5, 2.5, 3.5]
+std::make_pair("ovo", "queijo") | WRITE(); //(ovo, queijo)
+std::make_tuple(1,2.3,"tres")   | WRITE(); //(1, 2.3, tres)
 
 // após impressão, ele devolve o valor original
 // dá pra mudar o fim de linha passando um argumento
-5   | PRINT(" eh cinco\n")                 //5 eh cinco
-    | PRINT(" nao eh seis\n");             //5 nao eh seis
+5   | WRITE(" eh cinco\n")                 //5 eh cinco
+    | WRITE(" nao eh seis\n");             //5 nao eh seis
 
 // para imprimir classes, é necessário sobrecarregar a função
 // std::ostream& operator<<(std::ostream& os, const T& t)
 std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}} 
-                    | PRINT(); //[Joao:5, Maria:6]
+                    | WRITE(); //[Joao:5, Maria:6]
 ```
 
-### IOTA
+### RANGE
 
 - Ação: Gera um vector com valores sequenciais.
 - Pipe: Tamanho do vector.
@@ -184,14 +184,14 @@ std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}}
 ```c++
 
 ```c++
-- size: int | IOTA(init: T, inc = 1) -> vector<T>
+- size: int | RANGE(init: T, inc = 1) -> vector<T>
 ```
 
 ```c++
 4
 ```
 
-### ASSERT
+### ASSERTEQ
 
 - Ação: Dispara um warning caso o valor passado e esperado sejam diferentes.
 - Pipe: Valor a ser comparado.
@@ -201,8 +201,8 @@ std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}}
 
 ```c++
 
-5        | STR() | ASSERT("5"s, "assert1"); 
-5.0f     | STR() | ASSERT("5"s, "assert2");
-5.123f   | STR() | ASSERT("5.123"s, "assert3");
-"banana" | ASSERT("banana", "assert4");
+5        | TOSTR() | ASSERTEQ("5"s, "assert1"); 
+5.0f     | TOSTR() | ASSERTEQ("5"s, "assert2");
+5.123f   | TOSTR() | ASSERTEQ("5.123"s, "assert3");
+"banana" | ASSERTEQ("banana", "assert4");
 ```

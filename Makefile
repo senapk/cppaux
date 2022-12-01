@@ -1,7 +1,7 @@
 all: tests
-	./tests.out
+	./fn_tests.out
 
-tests: tests.cpp
-	g++ -std=c++17 -Wall -Werror -Wextra tests.cpp -o tests.out
+tests: fn_tests.cpp
+	g++ -std=c++17 -Wall -Werror -Wextra fn_tests.cpp -o fn_tests.out
 
 

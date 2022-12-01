@@ -73,6 +73,7 @@
         "hash_set": "cpp",
         "complex": "cpp",
         "bitset": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "forward_list": "cpp"
     }
 }
