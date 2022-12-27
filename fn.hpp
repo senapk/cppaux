@@ -18,77 +18,81 @@
 
 namespace fn {
 
-template<typename PRINTABLE> 
-std::string tostr(PRINTABLE data, std::string cfmt = "");
-auto        TOSTR(                std::string cfmt = "");
+// template<typename PRINTABLE>
+// std::string tostr(PRINTABLE data, std::string cfmt = "");
+// auto        TOSTR(                std::string cfmt = "");
 
-template <typename PRINTABLE> 
-PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "");
-template <typename PRINTABLE> 
-auto      ASSERTEQ(                    PRINTABLE expected, std::string label = "");
 
-template<typename CONTAINER>
-auto slice(CONTAINER container, int begin = 0);
-auto SLICE(                     int begin = 0);
+// template <typename PRINTABLE> 
+// PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "");
+// template <typename PRINTABLE> 
+// auto      ASSERTEQ(                    PRINTABLE expected, std::string label = "");
 
-template<typename CONTAINER>
-auto slice(CONTAINER container, int begin, int end);
-auto SLICE(                     int begin, int end);
+// template<typename CONTAINER>
+// auto slice(CONTAINER container, int begin = 0);
+// auto SLICE(                     int begin = 0);
 
-template<typename CONTAINER, typename FUNCTION>
-auto map(CONTAINER container, FUNCTION fn);
-template <typename FUNCTION>
-auto MAP(                     FUNCTION fn);
+// template<typename CONTAINER>
+// auto slice(CONTAINER container, int begin, int end);
+// auto SLICE(                     int begin, int end);
 
-template<typename CONTAINER, typename FUNCTION>
-auto filter(CONTAINER container, FUNCTION fn);
-template <typename FUNCTION> 
-auto FILTER(                     FUNCTION fn);
+// template<typename CONTAINER, typename FUNCTION>
+// auto map(CONTAINER container, FUNCTION fn);
+// template <typename FUNCTION>
+// auto MAP(                     FUNCTION fn);
 
-template <typename READABLE>
-READABLE strto(std::string value);
-template <typename READABLE>
-auto     STRTO();
+// template<typename CONTAINER, typename FUNCTION>
+// auto filter(CONTAINER container, FUNCTION fn);
+// template <typename FUNCTION> 
+// auto FILTER(                     FUNCTION fn);
 
-template <typename... TS>
-std::tuple<TS...> unpack(const std::string& line, char delimiter);
-template <typename... TS>
-auto              UNPACK(                         char delimiter);
+// template <typename READABLE>
+// READABLE strto(std::string value);
+// template <typename READABLE>
+// auto     STRTO();
 
-template<typename CONTAINER_A, typename CONTAINER_B>
-auto zip(CONTAINER_A A, CONTAINER_B B);
-template<typename CONTAINER_B>
-auto ZIP(               CONTAINER_B B);
+// double number(std::string value);
+// auto   NUMBER();
 
-template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
-auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin);
-template<typename CONTAINER_B, typename FNJOIN>
-auto ZIPWITH(               CONTAINER_B B, FNJOIN fnjoin);
+// template <typename... TS>
+// std::tuple<TS...> unpack(const std::string& line, char delimiter);
+// template <typename... TS>
+// auto              UNPACK(                         char delimiter);
 
-template<typename... Args>
-std::string format(std::string fmt, Args ...args);
-template<typename... Args>
-auto        FORMAT(                 Args ...args);
+// template<typename CONTAINER_A, typename CONTAINER_B>
+// auto zip(CONTAINER_A A, CONTAINER_B B);
+// template<typename CONTAINER_B>
+// auto ZIP(               CONTAINER_B B);
 
-std::vector<int> range(int init, int end, int step = 1);
-auto             RANGE(          int end, int step = 1);
+// template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
+// auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin);
+// template<typename CONTAINER_B, typename FNJOIN>
+// auto ZIPWITH(               CONTAINER_B B, FNJOIN fnjoin);
 
-std::vector<int> range(int end);
-auto             RANGE(       );
+// template<typename... Args>
+// std::string format(std::string fmt, Args ...args);
+// template<typename... Args>
+// auto        FORMAT(                 Args ...args);
 
-template <typename PRINTABLE>
-PRINTABLE write(PRINTABLE data, std::string end = "\n");
-auto      WRITE(                std::string end = "\n");
+// std::vector<int> range(int init, int end, int step = 1);
+// auto             RANGE(          int end, int step = 1);
 
-std::vector<std::string> split(std::string content, char delimiter = ' ');
-auto                     SPLIT(                     char delimiter = ' ');
+// std::vector<int> range(int end);
+// auto             RANGE(       );
 
-template <typename CONTAINER>
-std::string join(CONTAINER container, std::string separator = "", std::string brakets = "");
-auto        JOIN(                     std::string separator = "", std::string brakets = "");
+// template <typename PRINTABLE>
+// PRINTABLE write(PRINTABLE data, std::string end = "\n");
+// auto      WRITE(                std::string end = "\n");
 
-std::string input(std::istream & is = std::cin);
-auto        INPUT();
+// std::vector<std::string> split(std::string content, char delimiter = ' ');
+// auto                     SPLIT(                     char delimiter = ' ');
+
+// template <typename CONTAINER>
+// std::string join(CONTAINER container, std::string separator = "", std::string brakets = "");
+// auto        JOIN(                     std::string separator = "", std::string brakets = "");
+
+// std::string input(std::istream & is = std::cin);
+// auto        INPUT();
 
 //-------------------------------------------------
 //-------------------------------------------------
@@ -98,7 +102,7 @@ auto        INPUT();
 
 
 
-//guarda uma função de um único parametro para ser executada em pipeline ou invocada diretamente
+// Guarda uma função de um único parâmetro para ser executada em pipeline ou invocada diretamente
 template<typename FUNCTION> 
 struct PIPE {
     FUNCTION fn;
@@ -118,32 +122,6 @@ struct PIPE {
         return PIPE(data);
     }
 };
-
-//-------------------------------------------------
-
-template <typename PRINTABLE>
-PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label) {
-    if (received != expected) {
-        std::cout << "\n----------label------------\n" << label 
-                    << "\n---------received----------\n" << tostr(received) 
-                    << "\n---------expected----------\n" << tostr(expected) 
-                    << "\n---------------------------\n";
-        exit(1);
-    }
-    return received;
-};
-
-template <typename PRINTABLE> 
-auto ASSERTEQ(PRINTABLE expected, std::string label) {
-    return PIPE([expected, label](PRINTABLE received) {
-        return asserteq(received, expected, label);
-    });
-};
-
-
-//-------------------------------------------------
-#define FMAP(x, fx)             PIPE([] (auto x) { return fx; })
-#define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
 
 //-------------------------------------------------
 class __TOSTR {
@@ -246,6 +224,11 @@ public:
         return v ? (*this)(*v) : "None";
     }
 
+    template <typename T>
+    std::string operator()(const std::shared_ptr<T>& v) {
+        return (*this)(*v);
+    }
+
     std::string operator()(const std::string &v) {
         if (cfmt.size() > 0) {
             static std::string dummy;
@@ -267,16 +250,64 @@ public:
     }
 };
 
+// Converte o (dado, vetor, par, lista, mapa) em string.
+// Se passado o cfmt, converte utilizando o formato do printf.
+// Para ser impresso, o dado deve implementar o ostream operator<<
+// Exemplos:
+// tostr(5.6123, "%.2f")             // "5.61"
+// tostr(std::vector<int> {1, 2, 3}) // "[1, 2, 3]"
+// tostr(std::pair<int, int> {1, 2}) // "(1, 2)"
 template<typename PRINTABLE>
-std::string tostr(PRINTABLE data, std::string cfmt) {
+std::string tostr(PRINTABLE data, std::string cfmt = "") {
     return __TOSTR(cfmt)(data);
 }
 
-auto TOSTR(std::string cfmt) {
+// Converte o (dado, vetor, par, lista, mapa) em string.
+// Se passado o cfmt, converte utilizando o formato do printf.
+// Para ser impresso, o dado deve implementar o ostream operator<<
+// Exemplos:
+// 5.6123 | TOSTR("%.2f")               // 5.61
+// std::vector<int> {1, 2, 3} | TOSTR() // [1, 2, 3]
+// std::pair<int, int> {1, 2} | TOSTR() // (1, 2)
+inline auto TOSTR(std::string cfmt = "") {
     return PIPE([cfmt](auto data) {
         return __TOSTR(cfmt)(data);
     });
 };
+
+//-------------------------------------------------
+
+// Verifica se o dado recebido é igual ao esperado.
+// Se não for, imprime o dado recebido e o esperado e encerra o programa.
+template <typename PRINTABLE>
+PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "") {
+    if (received != expected) {
+        std::cout << "\n----------label------------\n" << label 
+                    << "\n---------received----------\n" << tostr(received) 
+                    << "\n---------expected----------\n" << tostr(expected) 
+                    << "\n---------------------------\n";
+        exit(1);
+    }
+    return received;
+};
+
+// Verifica se o dado recebido é igual ao esperado.
+// Se não for, imprime o dado recebido e o esperado e encerra o programa.
+template <typename PRINTABLE> 
+auto ASSERTEQ(PRINTABLE expected, std::string label = "") {
+    return PIPE([expected, label](PRINTABLE received) {
+        return asserteq(received, expected, label);
+    });
+};
+
+
+//-------------------------------------------------
+
+// Encurtador de função lambda para um único parâmetro e uma única operação a ser retornada
+#define FMAP(x, fx)             PIPE([] (auto x) { return fx; })
+
+// Encurtador de função lambda para dois parâmetros e uma única operação a ser retornada
+#define FMAP2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
 
 //-------------------------------------------------
 class __SLICE {
@@ -355,29 +386,39 @@ public:
     }
 };
 
+// Fatia um container de início até o fim retornando um vector com os elementos copiados.
+// Se o valor de begin for negativo, ele será contado a partir do fim do container.
 template<typename CONTAINER>
-auto slice(CONTAINER container, int begin) {
+auto slice(CONTAINER container, int begin = 0) {
     return __SLICE(begin)(container);
 }
 
-template<typename CONTAINER>
-auto slice(CONTAINER container, int begin, int end) {
-    return __SLICE(begin, end)(container);
-}
-
-auto SLICE(int begin) {
+// Fatia um container de início até o fim retornando um vector com os elementos copiados.
+// Se o valor de begin for negativo, ele será contado a partir do fim do container.
+inline auto SLICE(int begin = 0) {
     return PIPE([begin](auto container) {
         return __SLICE(begin)(container);
     });
 };
 
-auto SLICE(int begin, int end) {
+// Fatia um container de início até o fim retornando um vector com os elementos copiados.
+// Se o valor de begin ou end for negativo, ele será contado a partir do fim do container.
+template<typename CONTAINER>
+auto slice(CONTAINER container, int begin, int end) {
+    return __SLICE(begin, end)(container);
+}
+
+// Fatia um container de início até o fim retornando um vector com os elementos copiados.
+// Se o valor de begin ou end for negativo, ele será contado a partir do fim do container.
+inline auto SLICE(int begin, int end) {
     return PIPE([begin, end](auto container) {
         return __SLICE(begin, end)(container);
     });
 };
 
 // -------------------------------------------------
+
+// Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container
 template<typename CONTAINER, typename FUNCTION>
 auto map(CONTAINER container, FUNCTION fn) {
     std::vector<decltype(fn(*container.begin()))> aux;
@@ -385,6 +426,7 @@ auto map(CONTAINER container, FUNCTION fn) {
     return aux;
 }
 
+// Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container
 template <typename FUNCTION>
 auto MAP(FUNCTION fn) {
     return PIPE([fn](auto container) {
@@ -394,6 +436,7 @@ auto MAP(FUNCTION fn) {
 
 //-------------------------------------------------
 
+// Retorna um vetor com os elementos do container que satisfazem a função predicado fn
 template<typename CONTAINER, typename FUNCTION>
 auto filter(CONTAINER container, FUNCTION fn) {
     auto aux = slice(container, 0, 0);
@@ -404,6 +447,7 @@ auto filter(CONTAINER container, FUNCTION fn) {
     return aux;
 }
 
+// Retorna um vetor com os elementos do container que satisfazem a função  predicado fn
 template <typename FUNCTION>
 auto FILTER(FUNCTION fn) {
     return PIPE([fn](auto container) {
@@ -413,6 +457,8 @@ auto FILTER(FUNCTION fn) {
 
 //-------------------------------------------------
 
+// Transforma de string para o tipo solicitado utilizando o operador de extração do stream
+// Dispara uma exceção caso a conversão não seja possível
 template <typename READABLE>
 READABLE strto(std::string value) {
     std::istringstream iss(value);
@@ -423,10 +469,28 @@ READABLE strto(std::string value) {
     throw std::runtime_error("strto: invalid conversion from " + value);
 }
 
+// Transforma de string para o tipo solicitado utilizando o operador de extração do stream
+// Dispara uma exceção caso a conversão não seja possível
 template <typename READABLE>
 auto STRTO() {
     return PIPE([](std::string value) {
         return strto<READABLE>(value);
+    });
+};
+
+//-------------------------------------------------
+
+// Transforma de string para double utilizando a função strto
+// double x {number("3.14")};
+inline double number(std::string value) {
+    return strto<double>(value);
+}
+
+// Transforma de string para double utilizando a função strto
+// double x {"3.14"s | NUMBER()};
+inline auto NUMBER() {
+    return PIPE([](std::string value) {
+        return number(value);
     });
 };
 
@@ -456,11 +520,15 @@ struct __UNPACK {
 
 };
 
+// Transforma de string para tupla dados os tipos e o char separador
+// unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
 template <typename... TS>
 std::tuple<TS...> unpack(const std::string& line, char delimiter) {
     return __UNPACK<TS...>(delimiter)(line);
 }
 
+// Transforma de string para tupla dados os tipos e o char separador
+// "1:2.4:uva"s | UNPACK<int, double, std::string>(':') => (1, 2.4, "uva")
 template <typename... TS>
 auto UNPACK(char delimiter) {
     return PIPE([delimiter](std::string line) {
@@ -470,6 +538,8 @@ auto UNPACK(char delimiter) {
 
 //-------------------------------------------------
 
+// Une dois containers em um único container de pares limitado ao menor tamanho dos dois containers
+// zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
 template<typename CONTAINER_A, typename CONTAINER_B>
 auto zip(CONTAINER_A A, CONTAINER_B B) {
     auto fn = [](auto x) { return x; };
@@ -486,7 +556,8 @@ auto zip(CONTAINER_A A, CONTAINER_B B) {
     }
     return aux;
 };
-
+// Une dois containers em um único container de pares limitado ao menor tamanho dos dois containers
+// vector<int>{1, 2, 3} | ZIP(string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
 template<typename CONTAINER_B>
 auto ZIP(CONTAINER_B B) {
     return PIPE([B](auto A) {
@@ -608,7 +679,7 @@ auto FORMAT(Args ...args) {
 
 //-------------------------------------------------
 
-std::vector<int> range(int init, int end, int step) {
+inline std::vector<int> range(int init, int end, int step = 1) {
     if (step == 0)
         throw std::runtime_error("step cannot be zero");
     std::vector<int> aux;
@@ -624,17 +695,17 @@ std::vector<int> range(int init, int end, int step) {
     return aux;
 }
 
-auto RANGE(int end, int step) {
+inline auto RANGE(int end, int step = 1) {
     return PIPE([end, step](int init) {
         return range(init, end, step);
     });
 };
 
-std::vector<int> range(int end) {
+inline std::vector<int> range(int end) {
     return range(0, end, 1);
 }
 
-auto RANGE() {
+inline auto RANGE() {
     return PIPE([](int end) {
         return range(0, end, 1);
     });
@@ -643,12 +714,12 @@ auto RANGE() {
 //-------------------------------------------------
 
 template <typename PRINTABLE>
-PRINTABLE write(PRINTABLE data, std::string end) {
+PRINTABLE write(PRINTABLE data, std::string end = "\n") {
     std::cout << tostr(data) << end;
     return data;
 }
 
-auto WRITE(std::string end) {
+inline auto WRITE(std::string end = "\n") {
     return PIPE([end](auto data) {
         return write(data, end);
     });
@@ -656,7 +727,7 @@ auto WRITE(std::string end) {
 
 //-------------------------------------------------
 
-std::vector<std::string> split(std::string content, char delimiter) {
+inline std::vector<std::string> split(std::string content, char delimiter = ' ') {
     std::vector<std::string> aux;
     std::string token;
     std::istringstream tokenStream(content);
@@ -665,7 +736,7 @@ std::vector<std::string> split(std::string content, char delimiter) {
     return aux;
 }
 
-auto SPLIT(char delimiter) {
+inline auto SPLIT(char delimiter = ' ') {
     return PIPE([delimiter](std::string content) {
         return split(content, delimiter);
     });
@@ -674,11 +745,11 @@ auto SPLIT(char delimiter) {
 //-------------------------------------------------
 
 template <typename CONTAINER>
-std::string join(CONTAINER container, std::string separator, std::string brakets) {
+std::string join(CONTAINER container, std::string separator = "", std::string brakets = "") {
     return __TOSTR().join(container, separator, brakets);
 }
 
-auto JOIN(std::string separator, std::string brakets) {
+inline auto JOIN(std::string separator = "", std::string brakets = "") {
     return PIPE([separator, brakets](auto container) {
         return join(container, separator, brakets);
     });
@@ -686,14 +757,14 @@ auto JOIN(std::string separator, std::string brakets) {
 
 //-------------------------------------------------
 
-std::string input(std::istream & is) {
+inline std::string input(std::istream & is = std::cin) {
     std::string line;
     if (std::getline(is, line))
         return line;
     throw std::runtime_error("input empty");
 }
 
-auto INPUT() {
+inline auto INPUT() {
     return PIPE([](std::istream is) {
         return input(is);
     });
@@ -703,6 +774,6 @@ auto INPUT() {
 
 using namespace std::string_literals;
 
-double operator+(std::string text) {
+inline double operator+(std::string text) {
     return fn::strto<double>(text);
 }
