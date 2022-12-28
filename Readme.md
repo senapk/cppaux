@@ -5,7 +5,8 @@
 - [Duas opções de funções](#duas-opções-de-funções)
 - [Modo pipeline](#modo-pipeline)
 - [Resumo das funções](#resumo-das-funções)
-- [Documentação](#documentação)
+  - [Strings](#strings)
+  - [PIPE](#pipe)
   - [WRITE](#write)
   - [RANGE](#range)
   - [ASSERTEQ](#asserteq)
@@ -117,7 +118,7 @@ zipwith(cont<a>, cont<b>, fn: (a,b->c) -> [c]         // zipa dois containers us
 
 ```
 
-## String literals e conversão para double
+### Strings
 
 No C++11, foi introduzido o suporte a string literals, que permite criar strings de forma mais simples e legível.
 Esse modo já está habilitado na biblioteca, mas pode ser inserido manualmente utilizando `using namespace std::string_literals;` no seu código.
