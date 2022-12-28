@@ -101,6 +101,8 @@ namespace fn {
 
 
 /**
+ * @brief Functor para criação de funções Pipeline.
+ * 
  * PIPE é um functor, ou seja, uma struct que após instanciada, funciona como uma função.
  * Ela é construída passando uma função que recebe um único parâmetro qualquer.
  * O PIPE então guarda essa função para que possa ser executada em pipeline ou invocada diretamente.

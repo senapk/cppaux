@@ -5,7 +5,7 @@
 - [Duas opções de funções](#duas-opções-de-funções)
 - [Modo pipeline](#modo-pipeline)
 - [Resumo das funções](#resumo-das-funções)
-  - [Strings](#strings)
+  - [String](#string)
   - [PIPE](#pipe)
   - [WRITE](#write)
   - [RANGE](#range)
@@ -118,7 +118,7 @@ zipwith(cont<a>, cont<b>, fn: (a,b->c) -> [c]         // zipa dois containers us
 
 ```
 
-### Strings
+### String
 
 No C++11, foi introduzido o suporte a string literals, que permite criar strings de forma mais simples e legível.
 Esse modo já está habilitado na biblioteca, mas pode ser inserido manualmente utilizando `using namespace std::string_literals;` no seu código.
@@ -145,21 +145,33 @@ int main() {
 
 ### PIPE
 
+[](load)[](docs/pipe.cpp)[](fenced:cpp)
+
 ```cpp
 /**
+ * @brief Functor para criação de funções Pipeline.
+ * 
  * PIPE é um functor, ou seja, uma struct que após instanciada, funciona como uma função.
- * Ela é construída passando uma função que recebe um único parâmetro de qualquer tipo.
+ * Ela é construída passando uma função que recebe um único parâmetro qualquer.
  * O PIPE então guarda essa função para que possa ser executada em pipeline ou invocada diretamente.
  * 
  * @param fn função a ser guardada
  * @note https://github.com/senapk/cppaux/#pipe
  */
-
-auto fn = PIPE([](int x) { return 2 * x; });
-fn(1) | WRITE(); // 2
-fn(2) | WRITE(); // 4
-5 | fn | WRITE(); // 10
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+int main() {
+  auto fn = PIPE([](int x) { return 2 * x; });
+  fn(1) | WRITE(); // 2
+  fn(2) | WRITE(); // 4
+  fn(fn(3)) | WRITE(); // 12
+  5 | fn | WRITE(); // 10
+  5 | fn | fn | fn | WRITE(); // 40
+}
 ```
+
+[](load)
 
 ### WRITE
 
