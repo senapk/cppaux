@@ -2,29 +2,87 @@
 
 [](toc)
 
-- [Como utilizar as biblioteca](#como-utilizar-as-biblioteca)
-- [Resumo](#resumo)
+- [Duas opções de funções](#duas-opções-de-funções)
+- [Modo pipeline](#modo-pipeline)
+- [Resumo das funções](#resumo-das-funções)
 - [Documentação](#documentação)
-  - [WRITE](#print)
-  - [RANGE](#iota)
+  - [WRITE](#write)
+  - [RANGE](#range)
+  - [ASSERTEQ](#asserteq)
 [](toc)
 
-## Como utilizar
+## Duas opções de funções
 
-## Resumo
+- Todas as funções estão no namespace fn. Para utilizar, basta incluir o arquivo fn.hpp e usar o namespace fn.
+- Todas as funções da biblioteca estão disponibilizadas em dois formatos.
+  - Formato de função normal, escrita em minúsculo, com parênteses e argumentos.
+  - Formato de função em pipeline, escrita em maiúsculo, onde o primeiro argumento da função é passado pelo pipe.
+- Exemplo:
+  - A função write imprime o valor passado por parâmetro e retorna o valor.
+  - Ela tem um parâmetro opcional, que é o fim da linha, que por default é "\n".
+  - Modo função: `write(data, end)`.
+  - Modo pipeline: `data | WRITE(end)`.
+
+```cpp
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+int main() {
+    write("Hello World");
+    "Hello World" | WRITE();
+
+    int a = write(5, " :a\n");  //imprime o "5:a" e retorna o 5
+    int b = 5 | WRITE(" :b\n"); //imprime o "5:b" e retorna o 5
+    (void) a; //só pra não reclamar que não estamos utilizando o a
+    (void) b; //só pra não reclamar que não estamos utilizando o b
+}
+```
+
+## Modo pipeline
+
+As funções em pipeline são escritas em maiúsculo, e o primeiro argumento é passado pelo pipe.
+
+A vantagem do modo pipeline é que ele permite que você escreva funções em pipeline, sem precisar criar uma variável para cada passo, visualizando melhor o que está acontecendo.
+
+Por exemplo, pegar uma linha da entrada, separar em palavras, excluir primeiro e último, converter para int, pegar apenas os impares e imprimir poderia ser escrito pelo seguinte código:
+
+```cpp
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+int main() {
+    // 1 2 3 4 5 6 7
+    input() | SPLIT()                   // quebra em palavras ["1", "2", "3", "4", "5", "6", "7"]
+            | SLICE(1, -1)              // excluir primeiro e último ["2", "3", "4", "5", "6"]
+            | MAP(FNT(x, strto<int>(x)))// converter para int [2, 3, 4, 5, 6]
+            | FILTER(FNT(x, x % 2 == 1))// pegar apenas os impares [3, 5]
+            | WRITE();                  // imprimir
+    // [3, 5]
+}
+```
+
+## Resumo das funções
 
 ```py
+
+//----------------------------------------------------------
+//                       PIPE 
+//----------------------------------------------------------
+PIPE(FN)         Cria uma functor para ser executado em pipeline
+FNT(x, fn)       Função de transformação simples de um parâmetro
+FNT2(x, y, fxy)  Função de transformação simples de dois parâmetros e uma transformação
 
 //----------------------------------------------------------
 //                       BASE 
 //----------------------------------------------------------
 
-write(data: DATA, end = "\n")        -> DATA   // imprime um conteúdo
+write(data: DATA, end = "\n")        -> DATA   // imprime um conteúdo convertido pelo tostr
 input(fluxo = cin)                   -> str    // lê linha inteira
 range(end: int)                      -> [int]  // vetor de [0, end[, não inclui o end
 range(init: int, end: int, step = 1) -> [int]  // vetor de [init, end[, não inclui o end
 operator+(token: str)                -> double // transforma string em double
 "nome"s                              -> str    // transforma raw string em string
+
 //----------------------------------------------------------
 //                   PARA STRINGS
 //----------------------------------------------------------
@@ -59,25 +117,53 @@ zipwith(cont<a>, cont<b>, fn: (a,b->c) -> [c]         // zipa dois containers us
 
 ```
 
-## Documentação
+## String literals e conversão para double
 
-Os exemplos de uso utilizam o modelo de formatação de string definido em:
+No C++11, foi introduzido o suporte a string literals, que permite criar strings de forma mais simples e legível.
+Esse modo já está habilitado na biblioteca, mas pode ser inserido manualmente utilizando `using namespace std::string_literals;` no seu código.
+
+Outra função útil para manipulação de strings foi inspirada no operator + do javascript, que permite converter uma string em um número.
 
 ```cpp
 
-//por default, um literal texto é criado como um const char *
-//para criar uma string, basta adicionar um s no final do texto.
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+int main() {
+    auto a = "aa";              //const char *
+    auto b = std::string("bb"); //std::string
+    auto c = "cc"s;             //std::string
 
-auto a = "texto";              //const char *
-auto b = std::string("texto"); //std::string
-auto c = "texto"s;             //std::string
+    auto d = +"23.556"s;        //double
+    auto e = (int) +"23.556"s;  //int (cast)
 
+    std::cout << a <<  " " << b << " " << c << " " << d << " " << e << std::endl;
+}
+
+```
+
+### PIPE
+
+```cpp
+/**
+ * PIPE é um functor, ou seja, uma struct que após instanciada, funciona como uma função.
+ * Ela é construída passando uma função que recebe um único parâmetro de qualquer tipo.
+ * O PIPE então guarda essa função para que possa ser executada em pipeline ou invocada diretamente.
+ * 
+ * @param fn função a ser guardada
+ * @note https://github.com/senapk/cppaux/#pipe
+ */
+
+auto fn = PIPE([](int x) { return 2 * x; });
+fn(1) | WRITE(); // 2
+fn(2) | WRITE(); // 4
+5 | fn | WRITE(); // 10
 ```
 
 ### WRITE
 
 - Ação: Imprime o valor do objeto.
-- Pipe: qualquer variável ou container a ser impressa.
+- Pipe: qualquer variável ou container a serem impressos.
 - Args: fim da linha(opcional).
 - Retorna: a própria variável que foi passada pelo pipe.
 

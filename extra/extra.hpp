@@ -4,11 +4,11 @@
 namespace fn {
 
 auto KEYS() {
-    return PIPE(MAP(FMAP(x, x.first)));
+    return PIPE(MAP(FNT(x, x.first)));
 }
 
 auto VALUES() {
-    return PIPE(MAP(FMAP(x, x.second)));
+    return PIPE(MAP(FNT(x, x.second)));
 }
 
 auto SORT() {
