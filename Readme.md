@@ -3,13 +3,13 @@
 [](toc)
 
 - [Duas opções de funções](#duas-opções-de-funções)
-- [Modo pipeline](#modo-pipeline)
 - [Resumo das funções](#resumo-das-funções)
   - [String](#string)
   - [PIPE](#pipe)
+  - [TOSTR](#tostr)
   - [WRITE](#write)
   - [RANGE](#range)
-  - [ASSERTEQ](#asserteq)
+  - [VERIFY](#verify)
 [](toc)
 
 ## Duas opções de funções
@@ -23,6 +23,8 @@
   - Ela tem um parâmetro opcional, que é o fim da linha, que por default é "\n".
   - Modo função: `write(data, end)`.
   - Modo pipeline: `data | WRITE(end)`.
+
+[](load)[](tests/duas.cpp)[](fenced=cpp)
 
 ```cpp
 #include <iostream>
@@ -39,28 +41,8 @@ int main() {
 }
 ```
 
-## Modo pipeline
-
-As funções em pipeline são escritas em maiúsculo, e o primeiro argumento é passado pelo pipe.
-
-A vantagem do modo pipeline é que ele permite que você escreva funções em pipeline, sem precisar criar uma variável para cada passo, visualizando melhor o que está acontecendo.
-
-Por exemplo, pegar uma linha da entrada, separar em palavras, excluir primeiro e último, converter para int, pegar apenas os impares e imprimir poderia ser escrito pelo seguinte código:
-
-```cpp
-#include <iostream>
-#include "fn.hpp"
-using namespace fn;
-int main() {
-    // 1 2 3 4 5 6 7
-    input() | SPLIT()                   // quebra em palavras ["1", "2", "3", "4", "5", "6", "7"]
-            | SLICE(1, -1)              // excluir primeiro e último ["2", "3", "4", "5", "6"]
-            | MAP(FNT(x, strto<int>(x)))// converter para int [2, 3, 4, 5, 6]
-            | FILTER(FNT(x, x % 2 == 1))// pegar apenas os impares [3, 5]
-            | WRITE();                  // imprimir
-    // [3, 5]
-}
-```
+[](load)[](tests/modopipe.cpp)[](fenced=cpp)
+[]
 
 ## Resumo das funções
 
@@ -125,8 +107,9 @@ Esse modo já está habilitado na biblioteca, mas pode ser inserido manualmente 
 
 Outra função útil para manipulação de strings foi inspirada no operator + do javascript, que permite converter uma string em um número.
 
-```cpp
+[](load)[](tests/str.cpp)[](fenced=cpp)
 
+```cpp
 #include <iostream>
 #include "fn.hpp"
 using namespace fn;
@@ -139,13 +122,15 @@ int main() {
     auto e = (int) +"23.556"s;  //int (cast)
 
     std::cout << a <<  " " << b << " " << c << " " << d << " " << e << std::endl;
+    //aa bb cc 23.556 23
 }
-
 ```
+
+[](load)
 
 ### PIPE
 
-[](load)[](docs/pipe.cpp)[](fenced:cpp)
+[](load)[](fn.hpp)[](fenced=cpp:extract=pipe)
 
 ```cpp
 /**
@@ -158,16 +143,125 @@ int main() {
  * @param fn função a ser guardada
  * @note https://github.com/senapk/cppaux/#pipe
  */
+template<typename FUNCTION> 
+struct PIPE
+```
+
+[](load)
+
+[](load)[](tests/pipe.cpp)[](fenced=cpp)
+
+```cpp
 #include <iostream>
 #include "fn.hpp"
 using namespace fn;
 int main() {
-  auto fn = PIPE([](int x) { return 2 * x; });
-  fn(1) | WRITE(); // 2
-  fn(2) | WRITE(); // 4
-  fn(fn(3)) | WRITE(); // 12
-  5 | fn | WRITE(); // 10
-  5 | fn | fn | fn | WRITE(); // 40
+    auto fn = PIPE([](int x) { return 2 * x; });
+    fn(1) | WRITE(); // 2
+    fn(2) | WRITE(); // 4
+    fn(fn(3)) | WRITE(); // 12
+    5 | fn | WRITE(); // 10
+    5 | fn | fn | fn | WRITE(); // 40
+}
+```
+
+[](load)
+
+### TOSTR
+
+[](load)[](tests/tostr.cpp)[](fenced=cpp)
+
+```cpp
+/**
+ * Converte o dado passado em string.
+ * 
+ * Se passado o parâmetro de formatação cfmt, o dado será formatado usando o modelo do printf.
+ * Se o dado for um container, o formato será aplicado em todos os elementos
+ * do container recursivamente.
+ * 
+ * vectors, lists e arrays são impressos entre colchetes.
+ * maps e sets são impressos entre chaves.
+ * pairs e tuples são impressos entre parênteses.
+ * shared_ptr e optional são impressos como o valor contido ou null.
+ * 
+ * Para classe do usuário ser impressa, ela deve sobrecarregar o ostream& operador <<.
+ * 
+ * @param data Dado a ser convertido
+ * @param cfmt Parâmetro de formatação no modo printf
+ * @return String com o dado convertido
+ * 
+ * @note https://github.com/senapk/cppaux#tostr
+ */
+
+#include <iostream>
+#include <memory>
+#include <optional>
+#include "fn.hpp"
+using namespace fn;
+int main() {
+
+    // modo função
+    tostr(5.6123, "%.2f")                     | VERIFY("5.61"s);
+    tostr(std::vector<int> {1, 2, 3})         | VERIFY("[1, 2, 3]"s);
+    tostr(std::pair<int, int> {1, 2}, "%03d") | VERIFY("(001, 002)"s);
+    tostr("banana", "<%-8s>")                 | VERIFY("<banana  >"s);
+
+    // números
+    5.6123 | TOSTR("%.2f")     | VERIFY("5.61"s);
+    5      | TOSTR("%02d")     | VERIFY("05"s);
+
+    // alinhamento de string
+    "banana"  | TOSTR("%-8s")  | VERIFY("banana  "s);
+    "banana"  | TOSTR("%8s")   | VERIFY("  banana"s);
+
+    // containers
+    std::vector<int> {1, 2, 3}         | TOSTR() | VERIFY("[1, 2, 3]"s);
+    std::list<int> {1, 2, 3}           | TOSTR() | VERIFY("[1, 2, 3]"s);
+    std::array<int, 3> {1, 2, 3}       | TOSTR() | VERIFY("[1, 2, 3]"s);
+    
+
+    // pair
+    std::pair<int, int> {1, 2}         | TOSTR() | VERIFY("(1, 2)"s);
+
+    // tuples
+    std::make_tuple(1, 5.42, "banana") | TOSTR() | VERIFY("(1, 5.42, banana)"s);
+
+    // estruturas aninhadas
+    std::make_pair(std::make_pair(4, "ovo"), "chiclete") | TOSTR() | VERIFY("((4, ovo), chiclete)"s);
+
+    // formatação recursiva
+    std::make_tuple(1, 2, 3) 
+        | TOSTR("%03d") 
+        | VERIFY("(001, 002, 003)"s, "str");
+
+    std::make_pair(std::vector<int>{1,2,3}, std::vector<int>{4,5,6}) 
+        | TOSTR("%03d") 
+        | VERIFY("([001, 002, 003], [004, 005, 006])"s, "str");
+
+
+    // mapas
+    std::map<int, int>{{1, 2}, {3, 4}} | TOSTR() | VERIFY("[(1, 2), (3, 4)]"s);
+    std::map<std::string, int>{{"c", 1}, {"a", 2}} | TOSTR() | VERIFY("[(a, 2), (c, 1)]"s);
+    std::unordered_map<int, int>{{1, 2}, {3, 4}}             | TOSTR() | VERIFY("[(3, 4), (1, 2)]"s);
+    std::unordered_map<std::string, int>{{"c", 1}, {"a", 2}} | TOSTR() | VERIFY("[(a, 2), (c, 1)]"s);
+
+    // sets
+    std::set<int> {1, 2, 3}            | TOSTR() | VERIFY("[1, 2, 3]"s);
+    std::unordered_set<int>{1, 2, 3}          | TOSTR() | VERIFY("[3, 2, 1]"s);
+    std::unordered_set<std::string>{"c", "a"} | TOSTR() | VERIFY("[a, c]"s);
+
+    // bool não são alterados
+    std::vector<bool> {true, false, true} | TOSTR() | VERIFY("[1, 0, 1]"s);
+
+    // optional são impressos como o valor contido ou null
+    std::vector<std::optional<int>> {1, 2, std::nullopt} 
+        | TOSTR() 
+        | VERIFY("[1, 2, null]"s);
+
+    // shared_ptr são impressos como o valor contido ou null
+    std::vector<std::shared_ptr<int>>{std::make_shared<int>(1), std::make_shared<int>(2), nullptr}
+        | TOSTR()
+        | VERIFY("[1, 2, null]"s);
 }
 ```
 
@@ -225,7 +319,7 @@ std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}}
 4
 ```
 
-### ASSERTEQ
+### VERIFY
 
 - Ação: Dispara um warning caso o valor passado e esperado sejam diferentes.
 - Pipe: Valor a ser comparado.
@@ -235,8 +329,8 @@ std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}}
 
 ```c++
 
-5        | TOSTR() | ASSERTEQ("5"s, "assert1"); 
-5.0f     | TOSTR() | ASSERTEQ("5"s, "assert2");
-5.123f   | TOSTR() | ASSERTEQ("5.123"s, "assert3");
-"banana" | ASSERTEQ("banana", "assert4");
+5        | TOSTR() | VERIFY("5"s, "assert1"); 
+5.0f     | TOSTR() | VERIFY("5"s, "assert2");
+5.123f   | TOSTR() | VERIFY("5.123"s, "assert3");
+"banana" | VERIFY("banana", "assert4");
 ```

@@ -23,9 +23,9 @@ namespace fn {
 // auto        TOSTR(                std::string cfmt = "");
 
 // template <typename PRINTABLE> 
-// PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "");
+// PRINTABLE VERIFY(PRINTABLE received, PRINTABLE expected, std::string label = "");
 // template <typename PRINTABLE> 
-// auto      ASSERTEQ(                    PRINTABLE expected, std::string label = "");
+// auto      VERIFY(                    PRINTABLE expected, std::string label = "");
 
 // template<typename CONTAINER>
 // auto slice(CONTAINER container, int begin = 0);
@@ -99,7 +99,7 @@ namespace fn {
 //-------------------------------------------------
 //-------------------------------------------------
 
-
+//[[pipe]]
 /**
  * @brief Functor para criação de funções Pipeline.
  * 
@@ -111,7 +111,9 @@ namespace fn {
  * @note https://github.com/senapk/cppaux/#pipe
  */
 template<typename FUNCTION> 
-struct PIPE {
+struct PIPE
+//[[pipe]]]
+{
     FUNCTION fn;
     PIPE(FUNCTION fn) : fn(fn) {}
 
@@ -131,10 +133,10 @@ struct PIPE {
 };
 
 //-------------------------------------------------
-class __TOSTR {
-    std::string cfmt;
-public:
+template<typename PRINTABLE>
+std::string tostr(PRINTABLE data, std::string cfmt = ""); 
 
+struct __STRAUX {
     template <typename ...Args>
     static std::string cformat(const std::string& format, Args && ...args) 
     {
@@ -146,129 +148,196 @@ public:
         return output;
     }
 
-    static std::string embrace(std::string data, std::string brakets) 
+    static std::string embrace(std::string data, std::string brackets) 
     {
-        auto prefix = brakets.size() > 0 ? std::string {brakets[0]} : "";
-        auto suffix = brakets.size() > 1 ? std::string {brakets[1]} : "";
+        auto prefix = brackets.size() > 0 ? std::string {brackets[0]} : "";
+        auto suffix = brackets.size() > 1 ? std::string {brackets[1]} : "";
         return prefix + data + suffix;
     }
 
     template <typename CONTAINER>
-    std::string join(CONTAINER container, std::string separator = ", ", std::string brakets = "[]")
+    static std::string join(std::string fmt, CONTAINER container, std::string separator = ", ", std::string brackets = "[]")
     {
         std::ostringstream ss;
         for (auto it = container.begin(); it != container.end(); ++it) {
-            ss << (it == container.begin() ? "" : separator) << (*this)(*it);
+            ss << (it == container.begin() ? "" : separator) << tostr(*it, fmt);
         }
         auto output = ss.str();
-        return __TOSTR::embrace(output, brakets);
+        return __STRAUX::embrace(output, brackets);
     }
 
     template <typename... Ts>
-    std::string join(std::tuple<Ts...> const &theTuple, std::string separator = ", ", std::string brakets = "()")
+    static std::string join(std::string fmt, std::tuple<Ts...> const &theTuple, std::string separator = ", ", std::string brackets = "()")
     {
         std::stringstream ss;
         std::apply( [&](Ts const &...tupleArgs) {
                 std::size_t n{0};
-                ((ss << (*this)(tupleArgs) << (++n != sizeof...(Ts) ? separator : "")), ...);
+                ((ss << tostr(tupleArgs, fmt) << (++n != sizeof...(Ts) ? separator : "")), ...);
             }, theTuple);
-        return __TOSTR::embrace(ss.str(), brakets);
+        return __STRAUX::embrace(ss.str(), brackets);
     }
 
     template<typename A, typename B>
-    std::string join(std::pair<A, B> pair, std::string separator = ", ", std::string brakets = "()")
+    static std::string join(std::string fmt, std::pair<A, B> pair, std::string separator = ", ", std::string brackets = "()")
     {
-        auto output = (*this)(pair.first) + separator + (*this)(pair.second);
-        return __TOSTR::embrace(output, brakets);
+        auto output = tostr(pair.first, fmt) + separator + tostr(pair.second, fmt);
+        return __STRAUX::embrace(output, brackets);
     }
+};
 
-    //-----------------------------------------------------
-    __TOSTR(std::string cfmt = ""): cfmt(cfmt) {
-    }
+//-------------------------------------------------
 
-    template<typename A, typename B>
-    std::string operator()(const std::pair<A, B>& pair) {
-        return this->join(pair);
-    }
+//[[join]]
+/**
+ * @brief Transforma um container, par ou tupla em string separando os elementos pelo separador e envolvendo com os brakets.
+ *
+ * Se os elementos não forem strings, eles serão transformados em string utilizando a função tostr
+ * Exemplo:
+ * join(std::vector<int>{1, 2, 3}, "-", "<>") | WRITE(); // <1-2-3>
+ * join(range(10)) | WRITE(); // 0123456789 
+ */
+template <typename CONTAINER>
+std::string join(CONTAINER container, std::string separator = "", std::string brakets = "")
+//[[join]]
+{
+    return __STRAUX().join("", container, separator, brakets);
+}
 
-    template <typename... Ts>
-    std::string operator()(std::tuple<Ts...> const &theTuple) {
-        return this->join(theTuple);
-    }
+// Transforma um container, par ou tupla em string, separando os elementos pelo separador e envolvendo com os brakets
+// Se os elementos não forem strings, eles serão transformados em string utilizando a função TOSTR
+// Exemplo:
+// std::vector<int>{1, 2, 3} | JOIN("-", "<>") | WRITE(); // <1-2-3>
+// range(10) | JOIN() | WRITE(); // 0123456789
+inline auto JOIN(std::string separator = "", std::string brakets = "") {
+    return PIPE([separator, brakets](auto container) {
+        return join(container, separator, brakets);
+    });
+};
 
-    template <typename T>
-    std::string operator()(const std::vector<T> &v) {
-        return this->join(v);
-    }
+//-------------------------------------------------
 
-    template <typename T>
-    std::string operator()(const std::list<T> &v) {
-        return this->join(v);
-    }
-
-    template <typename T>
-    std::string operator()(const std::set<T> &v) {
-        return this->join(v);
-    }
-
-    template <typename T>
-    std::string operator()(const std::unordered_set<T> &v) {
-        return this->join(v);
-    }
-
-    template <typename K, typename T>
-    std::string operator()(const std::map<K, T> &v) {
-        return this->join(v);
-    }
-
-    template <typename K, typename T>
-    std::string operator()(const std::unordered_map<K, T> &v) {
-        return this->join(v);
-    }
-
-    template <typename T>
-    std::string operator()(const std::optional<T> &v) {
-        return v ? (*this)(*v) : "None";
-    }
-
-    template <typename T>
-    std::string operator()(const std::shared_ptr<T>& v) {
-        return (*this)(*v);
-    }
-
-    std::string operator()(const std::string &v) {
-        if (cfmt.size() > 0) {
-            static std::string dummy;
-            dummy = v;
-            return __TOSTR::cformat(cfmt, v.c_str());
-        }
-        return v;
-    }
-
-    template<typename PRINTABLE>
-    std::string operator()(PRINTABLE data) {
-        if (this->cfmt == "") {
+template <typename DATA>
+struct __TOSTR{
+    std::string apply(DATA data, std::string fmt = "") {
+        if (fmt == "") {
             std::ostringstream ss;
             ss << data;
             return ss.str();
         } else {
-            return __TOSTR::cformat(this->cfmt, data);
+            return __STRAUX::cformat(fmt, data);
         }
     }
 };
 
-// Converte o (dado, vetor, par, lista, mapa) em string.
-// Se passado o cfmt, converte utilizando o formato do printf.
-// Se o dado for um container, o formato será aplicado em todos os elementos
-// do container. As estruturas são impressas de forma recursiva.
-// Vectores, listas e mapas são impressos entre colchetes.
-// Pares são impressos entre parênteses.
-// Para ser impresso, o dado deve implementar o ostream operator<<
-// Exemplos:
-// std::cout << tostr(5.6123, "%.2f")                     << '\n'; // "5.61"
-// std::cout << tostr(std::vector<int> {1, 2, 3})         << '\n'; // "[1, 2, 3]"
-// std::cout << tostr(std::pair<int, int> {1, 2}, "%03d") << '\n'; // "(001, 002)"
-// std::cout << tostr("banana", "<%-8s>")                 << '\n'; // <banana  >
+//specialization for bool
+template <>
+struct __TOSTR<bool> {
+    std::string apply(bool t, std::string fmt = "") {
+        (void) fmt;
+        return t ? "true" : "false";
+    }
+};
+
+//specialization for string
+template <>
+struct __TOSTR<std::string> {
+    std::string apply(std::string v, std::string fmt = "") {
+        if (fmt.size() > 0) {
+            static std::string dummy;
+            dummy = v;
+            return __STRAUX::cformat(fmt, v.c_str());
+        }
+        return v;
+    }
+};
+
+//specialization for pair
+template <typename A, typename B>
+struct __TOSTR<std::pair<A, B>> {
+    std::string apply(std::pair<A, B> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "()");
+    }
+};
+
+//specialization for tuple
+template <typename... Ts>
+struct __TOSTR<std::tuple<Ts...>> {
+    std::string apply(std::tuple<Ts...> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "()");
+    }
+};
+
+//specialization for vector
+template <typename T>
+struct __TOSTR<std::vector<T>> {
+    std::string apply(std::vector<T> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "[]");
+    }
+};
+
+//specialization for list
+template <typename T>
+struct __TOSTR<std::list<T>> {
+    std::string apply(std::list<T> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "[]");
+    }
+};
+
+//specialization for array
+template <typename T, std::size_t N>
+struct __TOSTR<std::array<T, N>> {
+    std::string apply(std::array<T, N> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "[]");
+    }
+};
+
+//specialization for set
+template <typename T>
+struct __TOSTR<std::set<T>> {
+    std::string apply(std::set<T> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "{}");
+    }
+};
+
+//specialization for map
+template <typename A, typename B>
+struct __TOSTR<std::map<A, B>> {
+    std::string apply(std::map<A, B> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "{}");
+    }
+};
+
+//specialization for unordered_map
+template <typename A, typename B>
+struct __TOSTR<std::unordered_map<A, B>> {
+    std::string apply(std::unordered_map<A, B> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "{}");
+    }
+};
+
+//specialization for unordered_set
+template <typename T>
+struct __TOSTR<std::unordered_set<T>> {
+    std::string apply(std::unordered_set<T> t, std::string fmt = "") {
+        return __STRAUX::join(fmt, t, ", ", "{}");
+    }
+};
+
+//specialization for shared_ptr
+template <typename T>
+struct __TOSTR<std::shared_ptr<T>> {
+    std::string apply(std::shared_ptr<T> t, std::string fmt = "") {
+        return t ? __TOSTR<T>().apply(*t, fmt) : "null";
+    }
+};
+
+//specialization for optional
+template <typename T>
+struct __TOSTR<std::optional<T>> {
+    std::string apply(std::optional<T> t, std::string fmt = "") {
+        return t ? __TOSTR<T>().apply(*t, fmt) : "null";
+    }
+};
 
 /**
  * Converte o (dado, vetor, par, lista, mapa) em string.
@@ -284,28 +353,32 @@ public:
  * @param cfmt Parâmetro de formatação no modo printf
  * @return String com o dado convertido
  * 
- * @note https://github.com/senapk/cppaux#write
+ * @note https://github.com/senapk/cppaux#tostr
  */
 template<typename PRINTABLE>
-std::string tostr(PRINTABLE data, std::string cfmt = "") {
-    return __TOSTR(cfmt)(data);
+std::string tostr(PRINTABLE data, std::string cfmt) {
+    return __TOSTR<PRINTABLE>().apply(data, cfmt);
 }
 
-// Converte o (dado, vetor, string, par, lista, mapa) em string.
-// Se passado o cfmt, converte utilizando o formato do printf.
-// Se o dado for um container, o formato será aplicado em todos os elementos
-// do container. As estruturas são impressas de forma recursiva.
-// Vectores, listas e mapas são impressos entre colchetes.
-// Pares são impressos entre parênteses.
-// Para ser impresso, o dado deve implementar o ostream operator<<
-// Exemplos:
-// std::cout << (5.6123 | TOSTR("%.2f"))                     << '\n'; // 5.61
-// std::cout << (std::vector<int> {1, 2, 3} | TOSTR())       << '\n'; // [1, 2, 3]
-// std::cout << (std::pair<int, int> {1, 2} | TOSTR("%03d")) << '\n'; // (001, 002)
-// std::cout << ("banana"  | TOSTR("<%-8s>"))                << '\n'; // <banana  >
+/**
+ * Converte o (dado, vetor, par, lista, mapa) em string.
+ * 
+ * Se passado o parâmetro de formatação, o dado será formatado usando o modelo do printf.
+ * Se o dado for um container, o formato será aplicado em todos os elementos
+ * do container recursivamente.
+ * Vectores, listas e mapas são impressos entre colchetes.
+ * Pares são impressos entre parênteses.
+ * Para ser impresso, o dado deve implementar o ostream operator<<
+ * 
+ * @param data Dado a ser convertido
+ * @param cfmt Parâmetro de formatação no modo printf
+ * @return String com o dado convertido
+ * 
+ * @note https://github.com/senapk/cppaux#tostr
+ */
 inline auto TOSTR(std::string cfmt = "") {
     return PIPE([cfmt](auto data) {
-        return __TOSTR(cfmt)(data);
+        return tostr(data, cfmt);
     });
 };
 
@@ -313,9 +386,9 @@ inline auto TOSTR(std::string cfmt = "") {
 
 // Verifica se o dado recebido é igual ao esperado.
 // Se não for, imprime o dado recebido e o esperado e encerra o programa.
-// asserteq(4, 6, "testando se quatro é igual a seis");
+// verify(4, 6, "testando se quatro é igual a seis");
 template <typename PRINTABLE>
-PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "") {
+PRINTABLE verify(PRINTABLE received, PRINTABLE expected, std::string label = "") {
     if (received != expected) {
         std::cout << "\n----------label------------\n" << label 
                     << "\n---------received----------\n" << tostr(received) 
@@ -328,11 +401,11 @@ PRINTABLE asserteq(PRINTABLE received, PRINTABLE expected, std::string label = "
 
 // Verifica se o dado recebido é igual ao esperado.
 // Se não for, imprime o dado recebido e o esperado e encerra o programa.
-// 4 | ASSERTEQ(6, "testando se quatro é igual a seis");
+// 4 | VERIFY(6, "testando se quatro é igual a seis");
 template <typename PRINTABLE> 
-auto ASSERTEQ(PRINTABLE expected, std::string label = "") {
+auto VERIFY(PRINTABLE expected, std::string label = "") {
     return PIPE([expected, label](PRINTABLE received) {
-        return asserteq(received, expected, label);
+        return verify(received, expected, label);
     });
 };
 
@@ -745,7 +818,7 @@ public:
         auto vars = tuple_to_vector_str(controls);
         while(vars.size() < texts.size())
             vars.push_back("");
-        return __TOSTR().join(texts | ZIPWITH(vars, [](auto x, auto y) { return x + y;}), "", ""); 
+        return __STRAUX().join("", texts | ZIPWITH(vars, [](auto x, auto y) { return x + y;}), "", ""); 
     }
 };
 
@@ -885,28 +958,6 @@ inline auto SPLIT(char delimiter = ' ') {
     });
 };
 
-//-------------------------------------------------
-
-// Transforma um container em string, separando os elementos pelo separador e envolvendo com os brakets
-// Se os elementos não forem strings, eles serão transformados em string utilizando a função TOSTR
-// Exemplo:
-// join(std::vector<int>{1, 2, 3}, "-", "<>") | WRITE(); // <1-2-3>
-// join(range(10)) | WRITE(); // 0123456789
-template <typename CONTAINER>
-std::string join(CONTAINER container, std::string separator = "", std::string brakets = "") {
-    return __TOSTR().join(container, separator, brakets);
-}
-
-// Transforma um container em string, separando os elementos pelo separador e envolvendo com os brakets
-// Se os elementos não forem strings, eles serão transformados em string utilizando a função TOSTR
-// Exemplo:
-// std::vector<int>{1, 2, 3} | JOIN("-", "<>") | WRITE(); // <1-2-3>
-// range(10) | JOIN() | WRITE(); // 0123456789
-inline auto JOIN(std::string separator = "", std::string brakets = "") {
-    return PIPE([separator, brakets](auto container) {
-        return join(container, separator, brakets);
-    });
-};
 
 //-------------------------------------------------
 // Extrai uma linha e retorna como string
