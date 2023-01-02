@@ -42,7 +42,6 @@ int main() {
 ```
 
 [](load)[](tests/modopipe.cpp)[](fenced=cpp)
-[]
 
 ## Resumo das funções
 
@@ -169,7 +168,7 @@ int main() {
 
 ### TOSTR
 
-[](load)[](tests/tostr.cpp)[](fenced=cpp)
+[](load)[](fn.hpp)[](fenced=cpp:extract=tostr)
 
 ```cpp
 /**
@@ -192,7 +191,15 @@ int main() {
  * 
  * @note https://github.com/senapk/cppaux#tostr
  */
+template<typename PRINTABLE>
+std::string tostr(PRINTABLE data, std::string cfmt)
+```
 
+[](load)
+
+[](load)[](tests/tostr.cpp)[](fenced=cpp)
+
+```cpp
 #include <iostream>
 #include <memory>
 #include <optional>

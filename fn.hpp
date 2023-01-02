@@ -339,15 +339,20 @@ struct __TOSTR<std::optional<T>> {
     }
 };
 
+//[[tostr]]
 /**
- * Converte o (dado, vetor, par, lista, mapa) em string.
+ * Converte o dado passado em string.
  * 
- * Se passado o parâmetro de formatação, o dado será formatado usando o modelo do printf.
+ * Se passado o parâmetro de formatação cfmt, o dado será formatado usando o modelo do printf.
  * Se o dado for um container, o formato será aplicado em todos os elementos
  * do container recursivamente.
- * Vectores, listas e mapas são impressos entre colchetes.
- * Pares são impressos entre parênteses.
- * Para ser impresso, o dado deve implementar o ostream operator<<
+ * 
+ * vectors, lists e arrays são impressos entre colchetes.
+ * maps e sets são impressos entre chaves.
+ * pairs e tuples são impressos entre parênteses.
+ * shared_ptr e optional são impressos como o valor contido ou null.
+ * 
+ * Para classe do usuário ser impressa, ela deve sobrecarregar o ostream& operador <<.
  * 
  * @param data Dado a ser convertido
  * @param cfmt Parâmetro de formatação no modo printf
@@ -356,26 +361,12 @@ struct __TOSTR<std::optional<T>> {
  * @note https://github.com/senapk/cppaux#tostr
  */
 template<typename PRINTABLE>
-std::string tostr(PRINTABLE data, std::string cfmt) {
+std::string tostr(PRINTABLE data, std::string cfmt)
+//[[tostr]]
+{
     return __TOSTR<PRINTABLE>().apply(data, cfmt);
 }
 
-/**
- * Converte o (dado, vetor, par, lista, mapa) em string.
- * 
- * Se passado o parâmetro de formatação, o dado será formatado usando o modelo do printf.
- * Se o dado for um container, o formato será aplicado em todos os elementos
- * do container recursivamente.
- * Vectores, listas e mapas são impressos entre colchetes.
- * Pares são impressos entre parênteses.
- * Para ser impresso, o dado deve implementar o ostream operator<<
- * 
- * @param data Dado a ser convertido
- * @param cfmt Parâmetro de formatação no modo printf
- * @return String com o dado convertido
- * 
- * @note https://github.com/senapk/cppaux#tostr
- */
 inline auto TOSTR(std::string cfmt = "") {
     return PIPE([cfmt](auto data) {
         return tostr(data, cfmt);
