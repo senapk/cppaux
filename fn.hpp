@@ -18,87 +18,6 @@
 
 namespace fn {
 
-// template<typename PRINTABLE>
-// std::string tostr(PRINTABLE data, std::string cfmt = "");
-// auto        TOSTR(                std::string cfmt = "");
-
-// template <typename PRINTABLE> 
-// PRINTABLE VERIFY(PRINTABLE received, PRINTABLE expected, std::string label = "");
-// template <typename PRINTABLE> 
-// auto      VERIFY(                    PRINTABLE expected, std::string label = "");
-
-// template<typename CONTAINER>
-// auto slice(CONTAINER container, int begin = 0);
-// auto SLICE(                     int begin = 0);
-
-// template<typename CONTAINER>
-// auto slice(CONTAINER container, int begin, int end);
-// auto SLICE(                     int begin, int end);
-
-// template<typename CONTAINER, typename FUNCTION>
-// auto map(CONTAINER container, FUNCTION fn);
-// template <typename FUNCTION>
-// auto MAP(                     FUNCTION fn);
-
-// template<typename CONTAINER, typename FUNCTION>
-// auto filter(CONTAINER container, FUNCTION fn);
-// template <typename FUNCTION> 
-// auto FILTER(                     FUNCTION fn);
-
-// template <typename READABLE>
-// READABLE strto(std::string value);
-// template <typename READABLE>
-// auto     STRTO();
-
-// double number(std::string value);
-// auto   NUMBER();
-
-// template <typename... TS>
-// std::tuple<TS...> unpack(const std::string& line, char delimiter);
-// template <typename... TS>
-// auto              UNPACK(                         char delimiter);
-
-// template<typename CONTAINER_A, typename CONTAINER_B>
-// auto zip(CONTAINER_A A, CONTAINER_B B);
-// template<typename CONTAINER_B>
-// auto ZIP(               CONTAINER_B B);
-
-// template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
-// auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin);
-// template<typename CONTAINER_B, typename FNJOIN>
-// auto ZIPWITH(               CONTAINER_B B, FNJOIN fnjoin);
-
-// template<typename... Args>
-// std::string format(std::string fmt, Args ...args);
-// template<typename... Args>
-// auto        FORMAT(                 Args ...args);
-
-// std::vector<int> range(int init, int end, int step = 1);
-// auto             RANGE(          int end, int step = 1);
-
-// std::vector<int> range(int end);
-// auto             RANGE(       );
-
-// template <typename PRINTABLE>
-// PRINTABLE write(PRINTABLE data, std::string end = "\n");
-// auto      WRITE(                std::string end = "\n");
-
-// std::vector<std::string> split(std::string content, char delimiter = ' ');
-// auto                     SPLIT(                     char delimiter = ' ');
-
-// template <typename CONTAINER>
-// std::string join(CONTAINER container, std::string separator = "", std::string brakets = "");
-// auto        JOIN(                     std::string separator = "", std::string brakets = "");
-
-// std::string input(std::istream & is = std::cin);
-// auto        INPUT();
-
-//-------------------------------------------------
-//-------------------------------------------------
-//-------------------------------------------------
-//-------------------------------------------------
-//-------------------------------------------------
-
 //[[pipe]]
 /**
  * @brief Functor para criação de funções Pipeline.
@@ -108,6 +27,8 @@ namespace fn {
  * O PIPE então guarda essa função para que possa ser executada em pipeline ou invocada diretamente.
  * 
  * @param fn função a ser guardada
+ * 
+ * @warning 5 | PIPE([](int x){return x * 2;}) | WRITE(); // 10
  * @note https://github.com/senapk/cppaux/#pipe
  */
 template<typename FUNCTION> 
@@ -189,12 +110,19 @@ struct __STRAUX {
 
 //[[join]]
 /**
- * @brief Transforma um container, par ou tupla em string separando os elementos pelo separador e envolvendo com os brakets.
+ * Transforma um container, par ou tupla em string, separando os elementos
+ * pelo separador e envolvendo com os brakets.
  *
- * Se os elementos não forem strings, eles serão transformados em string utilizando a função tostr
- * Exemplo:
- * join(std::vector<int>{1, 2, 3}, "-", "<>") | WRITE(); // <1-2-3>
- * join(range(10)) | WRITE(); // 0123456789 
+ * Se os elementos não forem strings, eles serão transformados em string utilizando
+ * a função tostr.
+ * 
+ * @param container Container a ser transformado em string
+ * @param separator Separador entre os elementos
+ * @param brakets   Brakets que envolvem a string
+ * @return string com os elementos concatenados
+ * 
+ * @warning join(std::vector<int>{1,2,3}, " ", "{}") | WRITE(); // "{1 2 3}"
+ * @note https://github.com/senapk/cppaux#join
  */
 template <typename CONTAINER>
 std::string join(CONTAINER container, std::string separator = "", std::string brakets = "")
@@ -203,11 +131,6 @@ std::string join(CONTAINER container, std::string separator = "", std::string br
     return __STRAUX().join("", container, separator, brakets);
 }
 
-// Transforma um container, par ou tupla em string, separando os elementos pelo separador e envolvendo com os brakets
-// Se os elementos não forem strings, eles serão transformados em string utilizando a função TOSTR
-// Exemplo:
-// std::vector<int>{1, 2, 3} | JOIN("-", "<>") | WRITE(); // <1-2-3>
-// range(10) | JOIN() | WRITE(); // 0123456789
 inline auto JOIN(std::string separator = "", std::string brakets = "") {
     return PIPE([separator, brakets](auto container) {
         return join(container, separator, brakets);
@@ -357,7 +280,7 @@ struct __TOSTR<std::optional<T>> {
  * @param data Dado a ser convertido
  * @param cfmt Parâmetro de formatação no modo printf
  * @return String com o dado convertido
- * 
+ * @warning tostr(std::list<int>{1,2,3}, "%02d") | WRITE();
  * @note https://github.com/senapk/cppaux#tostr
  */
 template<typename PRINTABLE>
@@ -375,11 +298,23 @@ inline auto TOSTR(std::string cfmt = "") {
 
 //-------------------------------------------------
 
-// Verifica se o dado recebido é igual ao esperado.
-// Se não for, imprime o dado recebido e o esperado e encerra o programa.
-// verify(4, 6, "testando se quatro é igual a seis");
+//[[verify]]
+/**
+ * Verifica se o dado recebido é igual ao esperado.
+ * Se não for, imprime o dado recebido e o esperado e encerra o programa.
+ * Ambos os dados devem ser do mesmo tipo e são convertidos para string usando o tostr.
+ * 
+ * @param received Dado recebido
+ * @param expected Dado esperado
+ * @return Dado recebido
+ * 
+ * @note https://github.com/senapk/cppaux#verify
+ * 
+*/
 template <typename PRINTABLE>
-PRINTABLE verify(PRINTABLE received, PRINTABLE expected, std::string label = "") {
+PRINTABLE verify(PRINTABLE received, PRINTABLE expected, std::string label = "")
+//[[verify]]
+{
     if (received != expected) {
         std::cout << "\n----------label------------\n" << label 
                     << "\n---------received----------\n" << tostr(received) 
@@ -390,9 +325,6 @@ PRINTABLE verify(PRINTABLE received, PRINTABLE expected, std::string label = "")
     return received;
 };
 
-// Verifica se o dado recebido é igual ao esperado.
-// Se não for, imprime o dado recebido e o esperado e encerra o programa.
-// 4 | VERIFY(6, "testando se quatro é igual a seis");
 template <typename PRINTABLE> 
 auto VERIFY(PRINTABLE expected, std::string label = "") {
     return PIPE([expected, label](PRINTABLE received) {
@@ -403,12 +335,19 @@ auto VERIFY(PRINTABLE expected, std::string label = "") {
 
 //-------------------------------------------------
 
-// Encurtador de função lambda para um único parâmetro e uma única operação a ser retornada.
-// O primeiro parâmetro é o nome da variável a ser utilizada, o segundo é a operação a ser realizada.
-// Exemplo:
-// auto f = FNT(x, x + 1);
-// int x = f(5); // x = 6
+//[[fnt]]
+/**
+ * Encurtador de função lambda para um único parâmetro e uma única operação a ser retornada.
+ * O primeiro parâmetro é o nome da variável a ser utilizada, o segundo é a operação a ser realizada.
+ * 
+ * @param x Nome da variável
+ * @param fx Operação a ser realizada
+ * @return Função lambda
+ * 
+ * @note https://github.com/senapk/cppaux#fnt
+ */
 #define FNT(x, fx)                  [] (auto x) { return fx; }
+//[[fnt]]
 
 // Encurtador de função lambda para dois parâmetros e uma única operação a ser retornada.
 #define FNT2(x, y, fxy)             [] (auto x, auto y) { return fxy; }
@@ -490,68 +429,73 @@ public:
     }
 };
 
-// Fatia um container de begin até o fim retornando um vector com os elementos copiados.
-// Se o valor de begin for negativo, ele será contado a partir do fim do container.
-// O funcionamento é equivalente à função slice do Python ou do Javascript.
-// Exemplos:
-// slice(std::vector<int>{1, 2, 3, 4, 5}, 1)  | WRITE(); // [2, 3, 4, 5]
-// slice(std::vector<int>{1, 2, 3, 4, 5}, -2) | WRITE(); // [4, 5]
+//[[slice]]
+/**
+ * Fatia um container de begin até o fim retornando um vector com os elementos copiados.
+ * O funcionamento é equivalente à função slice do Python ou do Javascript.
+ * 
+ * @param container Container a ser fatiado
+ * @param begin Índice inicial
+ * @return Vector com os elementos copiados
+ * 
+ * @warning std::vector<int>{1, 2, 3, 4, 5} | SLICE(1)  | WRITE(); // [2, 3, 4, 5]
+ * 
+ * @note https://github.com/senapk/cppaux#slice
+*/
 template<typename CONTAINER>
-auto slice(CONTAINER container, int begin = 0) {
+auto slice(CONTAINER container, int begin = 0)
+//[[slice]]
+{
     return __SLICE(begin)(container);
 }
 
-// Fatia um container de begin até o fim retornando um vector com os elementos copiados.
-// Se o valor de begin for negativo, ele será contado a partir do fim do container.
-// O funcionamento é equivalente à função slice do Python ou do Javascript.
-// Exemplos:
+
 // std::vector<int>{1, 2, 3, 4, 5} | SLICE(1)  | WRITE(); // [2, 3, 4, 5]
 // std::vector<int>{1, 2, 3, 4, 5} | SLICE(-2) | WRITE(); // [4, 5]
-inline auto SLICE(int begin = 0) {
+inline auto SLICE(int begin = 0)
+{
     return PIPE([begin](auto container) {
         return __SLICE(begin)(container);
     });
 };
 
-// Fatia um container de begin até o fim retornando um vector com os elementos copiados.
-// Se o valor de begin for negativo, ele será contado a partir do fim do container.
-// O funcionamento é equivalente à função slice do Python ou do Javascript.
-// Exemplos:
 // slice(std::vector<int>{1, 2, 3, 4, 5}, 1, -1)  | WRITE(); // [2, 3, 4]
 // slice(std::vector<int>{1, 2, 3, 4, 5}, -3, -1) | WRITE(); // [3, 4]
 template<typename CONTAINER>
-auto slice(CONTAINER container, int begin, int end) {
+auto slice(CONTAINER container, int begin, int end)
+{
     return __SLICE(begin, end)(container);
 }
 
-// Fatia um container de begin até o fim retornando um vector com os elementos copiados.
-// Se o valor de begin for negativo, ele será contado a partir do fim do container.
-// O funcionamento é equivalente à função slice do Python ou do Javascript.
-// Exemplos:
 // std::vector<int>{1, 2, 3, 4, 5} | SLICE(1, -1)  | WRITE(); // [2, 3, 4]
 // std::vector<int>{1, 2, 3, 4, 5} | SLICE(-3, -1) | WRITE(); // [3, 4]
-inline auto SLICE(int begin, int end) {
+inline auto SLICE(int begin, int end)
+{
     return PIPE([begin, end](auto container) {
         return __SLICE(begin, end)(container);
     });
 };
 
 // -------------------------------------------------
-
-// Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container
-// Exemplo:
-// map(std::vector<int>{1, 2, 3, 4, 5}, [](auto x) {return x * 2;}) | WRITE(); // [2, 4, 6, 8, 10]
-// map(std::vector<int>{1, 2, 3, 4, 5}, FNT(x, x/2.0)) | WRITE(); // [0.5, 1, 1.5, 2, 2.5]
-// map(range(26), FNT(x, (char) (x + 'a'))) | JOIN() | WRITE(); // abcdefghijklmnopqrstuvwxyz
+//[[map]]
+/**
+ * Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container
+ * 
+ * @param container Container a ser mapeado
+ * @param fn Função a ser aplicada em cada elemento do container
+ * @return Vector com os elementos resultantes da aplicação da função
+ * 
+ * @note https://github.com/senapk/cppaux#map
+ */
 template<typename CONTAINER, typename FUNCTION>
-auto map(CONTAINER container, FUNCTION fn) {
+auto map(CONTAINER container, FUNCTION fn)
+//[[map]]
+{
     std::vector<decltype(fn(*container.begin()))> aux;
     std::transform(container.begin(), container.end(), std::back_inserter(aux), fn);
     return aux;
 }
 
-// Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container
-// Exemplo:
 // std::vector<int>{1, 2, 3, 4, 5} | MAP([](auto x) {return x * 2;}) | WRITE(); // [2, 4, 6, 8, 10]
 // std::vector<int>{1, 2, 3, 4, 5} | MAP(FNT(x, x/2.0)) | WRITE(); // [0.5, 1, 1.5, 2, 2.5]
 // range(26) | MAP(FNT(x, (char) (x + 'a'))) | JOIN() | WRITE(); // abcdefghijklmnopqrstuvwxyz
@@ -564,12 +508,19 @@ auto MAP(FUNCTION fn) {
 
 //-------------------------------------------------
 
-// Retorna um vetor com os elementos do container que satisfazem a função predicado fn
-// Exemplo:
-// filter(std::vector<int>{1, 2, 3, 4, 5}, [](auto x) {return x % 2 == 0;}) | WRITE(); // [2, 4]
-// filter(std::vector<int>{1, 2, 3, 4, 5}, FNT(x, x % 2 == 1)) | WRITE(); // [1, 3, 5]
+//[[filter]]
+/**
+ * Retorna um vetor com os elementos do container que satisfazem a função predicado fn
+ * @param container Container a ser filtrado
+ * @param fn Função predicado
+ * @return Vector com os elementos que satisfazem a função predicado
+ * 
+ * @note https://github.com/senapk/cppaux#filter
+ */
 template<typename CONTAINER, typename FUNCTION>
-auto filter(CONTAINER container, FUNCTION fn) {
+auto filter(CONTAINER container, FUNCTION fn)
+//[[filter]]
+{
     auto aux = slice(container, 0, 0);
     for(auto& x : container) {
         if(fn(x))
@@ -578,12 +529,11 @@ auto filter(CONTAINER container, FUNCTION fn) {
     return aux;
 }
 
-// Retorna um vetor com os elementos do container que satisfazem a função  predicado fn
-// Exemplo:
 // std::vector<int>{1, 2, 3, 4, 5} | FILTER([](auto x) {return x % 2 == 0;}) | WRITE(); // [2, 4]
 // std::vector<int>{1, 2, 3, 4, 5} | FILTER(FNT(x, x % 2 == 1)) | WRITE(); // [1, 3, 5]
 template <typename FUNCTION>
-auto FILTER(FUNCTION fn) {
+auto FILTER(FUNCTION fn)
+{
     return PIPE([fn](auto container) {
         return filter(container, fn);
     });
@@ -591,13 +541,23 @@ auto FILTER(FUNCTION fn) {
 
 //-------------------------------------------------
 
-// Transforma de string para o tipo solicitado utilizando o operador de extração do stream
-// Dispara uma exceção caso a conversão não seja possível
-// Exemplo:
-// int x = strto<int>("123") | WRITE(); // 123
-// double y = strto<double>("3.14") | WRITE(); // 3.14
+//[[strto]]
+/**
+ * Transforma de string para o tipo solicitado utilizando o operador de extração de stream.
+ * Dispara uma exceção caso a conversão não seja possível.
+ * 
+ * @param value String a ser convertida
+ * @tparam READABLE Tipo a ser convertido
+ * @return Valor convertido
+ * @throws std::runtime_error Caso a conversão não seja possível
+ * 
+ * @note https://github.com/senapk/cppaux#filter
+ * 
+*/
 template <typename READABLE>
-READABLE strto(std::string value) {
+READABLE strto(std::string value)
+//[[strto]]
+{
     std::istringstream iss(value);
     READABLE aux;
     if (iss >> aux) {
@@ -606,9 +566,6 @@ READABLE strto(std::string value) {
     throw std::runtime_error("strto: invalid conversion from " + value);
 }
 
-// Transforma de string para o tipo solicitado utilizando o operador de extração do stream
-// Dispara uma exceção caso a conversão não seja possível
-// Exemplo:
 // int x = "123"s | STRTO<int>() | WRITE(); // 123
 // double y = "3.14"s | STRTO<double>() | WRITE(); // 3.14
 template <typename READABLE>
@@ -620,13 +577,23 @@ auto STRTO() {
 
 //-------------------------------------------------
 
-// Transforma de string para double utilizando a função strto
-// double x {number("3.14")};
-inline double number(std::string value) {
+//[[number]]
+/**
+ * Transforma de string para double utilizando a função strto.
+ * 
+ * @param value String a ser convertida
+ * @return Valor convertido para double
+ * @throws std::runtime_error Caso a conversão não seja possível
+ * 
+ * @note https://github.com/senapk/cppaux#number
+ * 
+*/
+inline double number(std::string value)
+//[[number]]
+{
     return strto<double>(value);
 }
 
-// Transforma de string para double utilizando a função strto
 // double x {"3.14"s | NUMBER()};
 inline auto NUMBER() {
     return PIPE([](std::string value) {
@@ -660,14 +627,25 @@ struct __UNPACK {
 
 };
 
-// Transforma de string para tupla dados os tipos e o char separador
-// unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
+//[[unpack]]
+/**
+ * Transforma de string para tupla dados os tipos de cada elemento e o char separador.
+ * 
+ * @tparam TS... Tipos a serem extraídos
+ * @param value String a ser convertida
+ * @param delimiter Caractere separador entre os elementos
+ * @return Tupla com os elementos convertidos
+ * 
+ * @warning unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
+ * @note https://github.com/senapk/cppaux#unpack
+ * 
+ */
 template <typename... TS>
 std::tuple<TS...> unpack(const std::string& line, char delimiter) {
     return __UNPACK<TS...>(delimiter)(line);
 }
 
-// Transforma de string para tupla dados os tipos e o char separador
+
 // "1:2.4:uva"s | UNPACK<int, double, std::string>(':') | WRITE(); // (1, 2.4, "uva")
 template <typename... TS>
 auto UNPACK(char delimiter) {
@@ -845,12 +823,20 @@ auto FORMAT(Args ...args) {
 
 //-------------------------------------------------
 
-// Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step
-// Exemplo:
-// range(0, 10) | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-// range(0, 10, 2) | WRITE(); // [0, 2, 4, 6, 8]
-// range(10, 0, -1) | WRITE(); // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-inline std::vector<int> range(int init, int end, int step = 1) {
+// [[range]]
+/**
+ * @brief Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step.
+ * 
+ * @param init início
+ * @param end limite superior
+ * @param step passo do incremento
+ * @return vetor de inteiros
+ * 
+ * @note https://github.com/senapk/cppaux#range
+*/
+inline std::vector<int> range(int init, int end, int step = 1)
+//[[range]]
+{
     if (step == 0)
         throw std::runtime_error("step cannot be zero");
     std::vector<int> aux;
@@ -866,27 +852,44 @@ inline std::vector<int> range(int init, int end, int step = 1) {
     return aux;
 }
 
-// Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step
-// Exemplo:
-// 0 | RANGE(10) | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-// 0 | RANGE(10, 2) | WRITE(); // [0, 2, 4, 6, 8]
-// 10 |RANGE(0, -1) | WRITE(); // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+/**
+ * @brief Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step
+ * 
+ * @param init início
+ * @param end limite superior
+ * @param step passo do incremento
+ * @return vetor de inteiros
+ * 
+ * @note https://github.com/senapk/cppaux#range
+*/
 inline auto RANGE(int end, int step = 1) {
     return PIPE([end, step](int init) {
         return range(init, end, step);
     });
 };
 
-// Gera um vetor de inteiros de 0 até end, mas não incluindo end, com passo 1
-// Exemplo:
-// range(10) | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+/**
+ * @brief Gera um vetor de inteiros de 0 até end, mas não incluindo end, com passo step
+ * 
+ * @param end limite superior
+ * @param step passo do incremento
+ * @return vetor de inteiros
+ * 
+ * @note https://github.com/senapk/cppaux#range
+*/
 inline std::vector<int> range(int end) {
     return range(0, end, 1);
 }
 
-// Gera um vetor de inteiros de 0 até end, mas não incluindo end, com passo 1
-// Exemplo:
-// 10 | RANGE() | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+/**
+ * @brief Gera um vetor de inteiros de 0 até end, mas não incluindo end, com passo step
+ * 
+ * @param end limite superior
+ * @param step passo do incremento
+ * @return vetor de inteiros
+ * 
+ * @note https://github.com/senapk/cppaux#range
+*/
 inline auto RANGE() {
     return PIPE([](int end) {
         return range(0, end, 1);
@@ -895,25 +898,33 @@ inline auto RANGE() {
 
 //-------------------------------------------------
 
-// Transforma em string utilizando a função TOSTR e envia para o std::cout
-// Retorna o dado original
-// O end padrão é o caractere de nova linha
-// Exemplo:
-// write(std::vector<int>{1, 2, 3}); // [1, 2, 3]
-// int x = write(10); // 10
-
+//[[write]]
+/**
+ * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
+ * 
+ * @param data Dado a ser transformado em string
+ * @param end String de quebra de linha
+ * @return Dado original
+ * 
+ * @note https://github.com/senapk/cppaux#write
+ */
 template <typename PRINTABLE>
-PRINTABLE write(PRINTABLE data, std::string end = "\n") {
+PRINTABLE write(PRINTABLE data, std::string end = "\n") 
+//[[write]]
+{
     std::cout << tostr(data) << end;
     return data;
 }
 
-// Transforma em string utilizando a função TOSTR e envia para o std::cout
-// Retorna o dado original
-// O end padrão é o caractere de nova linha
-// Exemplo:
-// std::vector<int>{1, 2, 3} | WRITE(); // [1, 2, 3]
-// int x = 10 | WRITE(); // 10
+/**
+ * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
+ * 
+ * @param data Dado a ser transformado em string
+ * @param end String de quebra de linha
+ * @return Dado original
+ * 
+ * @note https://github.com/senapk/cppaux#write
+ */
 inline auto WRITE(std::string end = "\n") {
     return PIPE([end](auto data) {
         return write(data, end);
