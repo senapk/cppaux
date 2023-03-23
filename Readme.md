@@ -21,30 +21,35 @@
 
 ## Duas opções de funções
 
-- Todas as funções estão no namespace fn. Para utilizar, basta incluir o arquivo fn.hpp e usar o namespace fn.
-- Todas as funções da biblioteca estão disponibilizadas em dois formatos.
+- As funções estão no namespace fn.
+  - Para utilizar, basta incluir o arquivo fn.hpp e usar o namespace fn.
+- As funções estão disponibilizadas em dois formatos:
   - Formato de função normal, escrita em minúsculo, com parênteses e argumentos.
   - Formato de função em pipeline, escrita em maiúsculo, onde o primeiro argumento da função é passado pelo pipe.
 - Exemplo:
-  - A função write imprime o valor passado por parâmetro e retorna o valor.
-  - Ela tem um parâmetro opcional, que é o fim da linha, que por default é "\n".
-  - Modo função: `write(data, end)`.
-  - Modo pipeline: `data | WRITE(end)`.
+  - A função `tostr()` transforma um dado passado em uma string.
+    - Modo função: `tostr(data, fmt)`.
+    - Modo pipeline: `data | TOSTR(fmt))`.
+    - Um parâmetro opcional é a formatação a ser aplicada utilizando o padrão printf.
+  - A função `write()` imprime um dado passado no fluxo de saída padrão.
+    - Modo função: `write(data)`.
+    - Modo pipeline: `data | WRITE())`.
 
 [](load)[](guides/duas.cpp)[](fenced=cpp)
 
 ```cpp
 #include <iostream>
+#include <vector>
 #include "fn.hpp"
 using namespace fn;
 int main() {
-    write("Hello World");
-    "Hello World" | WRITE();
-
-    int a = write(5, " :a\n");  //imprime o "5:a" e retorna o 5
-    int b = 5 | WRITE(" :b\n"); //imprime o "5:b" e retorna o 5
-    (void) a; //só pra não reclamar que não estamos utilizando o a
-    (void) b; //só pra não reclamar que não estamos utilizando o b
+    std::vector<double> vet {1, 2, 3, 4};
+    
+    //modo função
+    write(tostr(vet, "%02d")); //imprime [01, 02, 03, 04]
+    
+    //modo pipeline
+    vet | TOSTR("%02d") | WRITE(); //imprime [01, 02, 03, 04]
 }
 ```
 
