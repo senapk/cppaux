@@ -122,6 +122,7 @@ struct __STRAUX {
  * @return string com os elementos concatenados
  * 
  * @warning join(std::vector<int>{1,2,3}, " ", "{}") | WRITE(); // "{1 2 3}"
+ * 
  * @note https://github.com/senapk/cppaux#join
  */
 template <typename CONTAINER>
@@ -280,7 +281,9 @@ struct __TOSTR<std::optional<T>> {
  * @param data Dado a ser convertido
  * @param cfmt Parâmetro de formatação no modo printf
  * @return String com o dado convertido
+ * 
  * @warning tostr(std::list<int>{1,2,3}, "%02d") | WRITE();
+ * 
  * @note https://github.com/senapk/cppaux#tostr
  */
 template<typename PRINTABLE>
@@ -636,6 +639,7 @@ struct __UNPACK {
  * @return Tupla com os elementos convertidos
  * 
  * @warning unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
+ * 
  * @note https://github.com/senapk/cppaux#unpack
  * 
  */
@@ -854,6 +858,8 @@ auto FORMAT(Args ...args) {
  * @param step passo do incremento
  * @return vetor de inteiros
  * 
+ * @warning range(0, 10, 2) | WRITE(); // [0, 2, 4, 6, 8]
+ * 
  * @note https://github.com/senapk/cppaux#range
 */
 inline std::vector<int> range(int init, int end, int step = 1)
@@ -927,6 +933,8 @@ inline auto RANGE() {
  * @param data Dado a ser transformado em string
  * @param end String de quebra de linha
  * @return Dado original
+ * 
+ * @warning std::vector<int> {1, 2, 3} | WRITE();
  * 
  * @note https://github.com/senapk/cppaux#write
  */

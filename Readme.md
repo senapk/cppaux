@@ -96,7 +96,7 @@ split        (content: str, delimiter = ' ') -> [str]               // dado um d
 filter(container<a>, fn: (a -> bool))      -> [a]       // filtra os elementos que satisfazem a função
 map   (container<a>, fn: (a -> b   ))      -> [b]       // aplica uma função em todos os elementos
 slice (container<a>, begin = 0)            -> [a]       // copia de begin até o final
-slice (container<a>, begin: int, end: int) -> [a];      // copia de begin até end
+slice (container<a>, begin: int, end: int) -> [a]       // copia de begin até end
 
 //----------------------------------------------------------
 //             ZIP
@@ -207,7 +207,9 @@ int main() {
  * @param data Dado a ser convertido
  * @param cfmt Parâmetro de formatação no modo printf
  * @return String com o dado convertido
+ * 
  * @warning tostr(std::list<int>{1,2,3}, "%02d") | WRITE();
+ * 
  * @note https://github.com/senapk/cppaux#tostr
  */
 template<typename PRINTABLE>
@@ -311,6 +313,7 @@ int main() {
  * @return string com os elementos concatenados
  * 
  * @warning join(std::vector<int>{1,2,3}, " ", "{}") | WRITE(); // "{1 2 3}"
+ * 
  * @note https://github.com/senapk/cppaux#join
  */
 template <typename CONTAINER>
@@ -354,6 +357,8 @@ int main() {
  * @param data Dado a ser transformado em string
  * @param end String de quebra de linha
  * @return Dado original
+ * 
+ * @warning std::vector<int> {1, 2, 3} | WRITE();
  * 
  * @note https://github.com/senapk/cppaux#write
  */
@@ -420,6 +425,8 @@ int main() {
  * @param end limite superior
  * @param step passo do incremento
  * @return vetor de inteiros
+ * 
+ * @warning range(0, 10, 2) | WRITE(); // [0, 2, 4, 6, 8]
  * 
  * @note https://github.com/senapk/cppaux#range
 */
@@ -677,6 +684,7 @@ int main() {
  * @return Tupla com os elementos convertidos
  * 
  * @warning unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
+ * 
  * @note https://github.com/senapk/cppaux#unpack
  * 
  */
@@ -710,23 +718,6 @@ int main() {
 
 ### FORMAT
 
-```cpp
-format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818) | WRITE(); 
-// O pi é 3.14 e o e é 2.72
-
-format("Meu vetor é {}", range(10)) | WRITE();
-// Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | WRITE(); 
-// Vetor com duas casas [1.13, 2.00, 3.30]
-
-format("Alinhado a esquerda 10 casas [{%-10s}]", "abacate") | WRITE();
-// Alinhado a esquerda 10 casas [abacate   ]
-
-format("Alinhado a direita 10 casas [{%10s}]", "abacate") | WRITE(); 
-// Alinhado a direita 10 casas [   abacate]
-```
-
 [](load)[](fn.hpp)[](fenced=cpp:extract=format)
 
 ```cpp
@@ -756,6 +747,22 @@ std::string format(std::string fmt, Args ...args)
 using namespace fn;
 
 int main() {
+
+    format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818) | WRITE(); 
+    // O pi é 3.14 e o e é 2.72
+
+    format("Meu vetor é {}", range(10)) | WRITE();
+    // Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | WRITE(); 
+    // Vetor com duas casas [1.13, 2.00, 3.30]
+
+    format("Alinhado a esquerda 10 casas [{%-10s}]", "abacate") | WRITE();
+    // Alinhado a esquerda 10 casas [abacate   ]
+
+    format("Alinhado a direita 10 casas [{%10s}]", "abacate") | WRITE(); 
+    // Alinhado a direita 10 casas [   abacate]
+
     "Contando de 1 a 10 {}"s 
         | FORMAT(range(1,11)) 
         | VERIFY("Contando de 1 a 10 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"s);
