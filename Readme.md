@@ -58,7 +58,7 @@ int main() {
 
 ## Resumo das funções
 
-```py
+```js
 
 
 
