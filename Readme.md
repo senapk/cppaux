@@ -4,7 +4,8 @@
 
 - [Duas opções de funções](#duas-opções-de-funções)
 - [Resumo das funções](#resumo-das-funções)
-  - [String](#string)
+- [Documentação](#documentação)
+  - [String e Operador +](#string-e-operador-)
   - [PIPE](#pipe)
   - [TOSTR](#tostr)
   - [JOIN](#join)
@@ -59,12 +60,7 @@ int main() {
 
 ```py
 
-//----------------------------------------------------------
-//                       PIPE 
-//----------------------------------------------------------
-PIPE(FN)         Cria uma functor para ser executado em pipeline
-FNT(x, fn)       Função de transformação simples de um parâmetro
-FNT2(x, y, fxy)  Função de transformação simples de dois parâmetros e uma transformação
+
 
 //----------------------------------------------------------
 //                       BASE 
@@ -109,9 +105,18 @@ slice (container<a>, begin: int, end: int) -> [a];      // copia de begin até e
 zip    (cont<a>, cont<b>)              -> [(a,b)] // zipa dois containers em um cont de pares
 zipwith(cont<a>, cont<b>, fn: (a,b->c) -> [c]         // zipa dois containers usando uma função
 
+//----------------------------------------------------------
+//                       PIPE 
+//----------------------------------------------------------
+PIPE(FN)         Cria uma functor para ser executado em pipeline
+FNT(x, fn)       Função de transformação simples de um parâmetro
+FNT2(x, y, fxy)  Função de transformação simples de dois parâmetros e uma transformação
+
 ```
 
-### String
+## Documentação
+
+### String e Operador +
 
 No C++11, foi introduzido o suporte a string literals, que permite criar strings de forma mais simples e legível.
 Esse modo já está habilitado na biblioteca, mas pode ser inserido manualmente utilizando `using namespace std::string_literals;` no seu código.
