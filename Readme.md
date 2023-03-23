@@ -782,13 +782,6 @@ int main() {
 
 ### SPLIT
 
-```cpp
-split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
-split("a,b,c", ',') | WRITE(); // [a, b, c]
-split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
-split("eu gosto de comer    banana") | WRITE(); // [eu, gosto, de, comer, , , , banana]")
-```
-
 [](load)[](fn.hpp)[](fenced=cpp:extract=split)
 
 ```cpp
@@ -813,9 +806,15 @@ inline std::vector<std::string> split(std::string content, char delimiter = ' ')
 using namespace fn;
 
 int main() {
+
+    split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
+    split("a,b,c", ',') | WRITE(); // [a, b, c]
+    split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
+    split("eu gosto de comer    banana") | WRITE(); // [eu, gosto, de, comer, , , , banana]")
+
     split("a,b,c", ',') | TOSTR() | VERIFY("[a, b, c]"s);
-    "gato mato rato" | SPLIT()    | TOSTR() | VERIFY("[gato, mato, rato]"s);
-    "1,2,3,4,5"      | SPLIT(',') | TOSTR() | VERIFY("[1, 2, 3, 4, 5]"s);
+    "gato mato rato"    | SPLIT()    | TOSTR() | VERIFY("[gato, mato, rato]"s);
+    "1,2,3,4,5"         | SPLIT(',') | TOSTR() | VERIFY("[1, 2, 3, 4, 5]"s);
     split("eu gosto de comer    banana") | TOSTR() 
         | VERIFY("[eu, gosto, de, comer, , , , banana]"s);
 
