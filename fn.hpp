@@ -566,8 +566,8 @@ READABLE strto(std::string value)
     throw std::runtime_error("strto: invalid conversion from " + value);
 }
 
-// int x = "123"s | STRTO<int>() | WRITE(); // 123
-// double y = "3.14"s | STRTO<double>() | WRITE(); // 3.14
+// int x = "123"s | STRTO<int>(); // 123
+// double y = "3.14"s | STRTO<double>(); // 3.14
 template <typename READABLE>
 auto STRTO() {
     return PIPE([](std::string value) {
@@ -624,7 +624,6 @@ struct __UNPACK {
         std::stringstream ss(content);
         return tuple_read_impl<Types...>(ss, this->delimiter);
     }
-
 };
 
 //[[unpack]]
@@ -641,7 +640,9 @@ struct __UNPACK {
  * 
  */
 template <typename... TS>
-std::tuple<TS...> unpack(const std::string& line, char delimiter) {
+std::tuple<TS...> unpack(const std::string& line, char delimiter)
+//[[unpack]]
+{
     return __UNPACK<TS...>(delimiter)(line);
 }
 
@@ -656,10 +657,22 @@ auto UNPACK(char delimiter) {
 
 //-------------------------------------------------
 
-// Une dois containers em um único container de pares limitado ao menor tamanho dos dois containers
-// zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
+//[[zip]]
+/**
+ * Une dois containers em um vetor de pares limitado ao menor tamanho dos dois containers.
+ * 
+ * @param container_a primeiro container
+ * @param container_b segundo container
+ * @return Vetor de pares
+ * 
+ * @warning zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
+ * @note https://github.com/senapk/cppaux#zip
+ * 
+ */
 template<typename CONTAINER_A, typename CONTAINER_B>
-auto zip(CONTAINER_A A, CONTAINER_B B) {
+auto zip(CONTAINER_A A, CONTAINER_B B)
+//[[zip]]
+{
     auto fn = [](auto x) { return x; };
     using type_a = decltype(fn(*A.begin()));
     using type_b = decltype(fn(*B.begin()));
@@ -685,12 +698,23 @@ auto ZIP(CONTAINER_B B) {
 
 //-------------------------------------------------
 
-// Une dois containers em um único container de pares limitado ao menor tamanho dos dois containers
-// colocando o resultado da função fnjoin em cada par no container de saída
-// Exemplo:
-//zipwith(range(10), "pterodactilo"s, FNT2(x, y, tostr(x) + y)) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]
+//[[zipwith]]
+/**
+ * Une dois containers em um único container limitado ao menor tamanho dos dois containers
+ * colocando o resultado da função fnjoin em cada par no container de saída.
+ * 
+ * @param container_a primeiro container
+ * @param container_b segundo container
+ * @return Vetor com os resultados
+ * 
+ * @warning zipwith(range(10), "pterodactilo"s, FNT2(x, y, tostr(x) + y)) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]
+ * @note https://github.com/senapk/cppaux#unzip
+ * 
+ */
 template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
-auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin) {
+auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin)
+//[[zipwith]]
+{
     auto idcopy = [](auto x) { return x; };
     using type_out = decltype( fnjoin( idcopy(*A.begin()), idcopy(*B.begin()) ));
     std::vector<type_out> aux;
@@ -791,29 +815,27 @@ public:
     }
 };
 
-// Formata uma string com base nos argumentos passados utilizando um modelo de chaves para posicionar os argumentos.
-// Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
-// Containers são formatados de acordo com a função TOSTR
-// Exemplo:
-// format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818) | WRITE(); // O pi é 3.14 e o e é 2.72
-// format("Meu vetor é {}", range(10)) | WRITE(); // Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-// format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | WRITE(); // Vetor com duas casas [1.13, 2.00, 3.30]
-// format("Alinhado a esquerda 10 casas [{%-10s}]", "abacate") | WRITE(); // Alinhado a esquerda 10 casas [abacate   ]
-// format("Alinhado a direita  10 casas [{%10s}]", "abacate") | WRITE(); // Alinhado a esquerda 10 casas [abacate   ]
+//[[format]]
+/**
+ * Formata uma string com base nos argumentos passados utilizando um modelo de chaves para posicionar os argumentos.
+ * Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
+ * Não primitivos são formatados de acordo com a função TOSTR
+ * 
+ * @param std::string fmt: O texto com os {} para substituir pelos argumentos
+ * @param Args ...args: Os argumentos a serem substituídos
+ * @return std::string: O texto formatado
+ * 
+ * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @note https://github.com/senapk/cppaux#format
+ * 
+ */
 template<typename... Args>
-std::string format(std::string fmt, Args ...args) {
+std::string format(std::string fmt, Args ...args)
+//[[format]]
+{
     return __FORMAT<Args...>(args...)(fmt);
 }
 
-// Formata uma string com base nos argumentos passados utilizando um modelo de chaves para posicionar os argumentos.
-// Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
-// Containers são formatados de acordo com a função TOSTR
-// Exemplo:
-// "O {} é {0.2f} e o {} é {0.2f}"s | FORMAT("pi", 3.141592653, "e", 2.7182818) | WRITE(); // O pi é 3.14 e o e é 2.72
-// "Meu vetor é {}" | FORMAT(range(10)) | WRITE(); // Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-// "Vetor com duas casas {%.2f}" | FORMAT(std::vector<double>{1.1321, 2, 3.3}) | WRITE(); // Vetor com duas casas [1.13, 2.00, 3.30]
-// "Alinhado a esquerda 10 casas [{%-10s}]" | FORMAT("abacate") | WRITE(); // Alinhado a esquerda 10 casas [abacate   ]
-// "Alinhado a direita  10 casas [{%10s}]" | FORMAT("abacate") | WRITE(); // Alinhado a esquerda 10 casas [abacate   ]
 template<typename... Args>
 auto FORMAT(Args ...args) {
     return PIPE([args...](std::string fmt) {
@@ -933,13 +955,19 @@ inline auto WRITE(std::string end = "\n") {
 
 //-------------------------------------------------
 
-// Transforma uma string em um vetor de strings, separando pelo delimitador
-// Retorna o vetor de strings
-// Exemplo:
-// split("a,b,c", ',') | WRITE(); // [a, b, c]
-// split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
-// split("eu gosto de comer    banana") | WRITE(); // [eu, gosto, de, comer, , , , banana]")
-inline std::vector<std::string> split(std::string content, char delimiter = ' ') {
+//[[split]]
+/**
+ * Transforma uma string em um vetor de strings, separando pelo delimitador
+ * 
+ * @param content String a ser separada
+ * @param delimiter Caractere delimitador
+ * @return Vetor de strings
+ * 
+ * @note https://github.com/senapk/cppaux#split
+ */
+inline std::vector<std::string> split(std::string content, char delimiter = ' ')
+//[[split]]
+{
     std::vector<std::string> aux;
     std::string token;
     std::istringstream tokenStream(content);

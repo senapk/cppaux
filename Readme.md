@@ -14,6 +14,9 @@
   - [FNT](#fnt)
   - [SLICE](#slice)
   - [FILTER](#filter)
+  - [UNPACK](#unpack)
+  - [FORMAT](#format)
+  - [SPLIT](#split)
 [](toc)
 
 ## Duas opções de funções
@@ -28,7 +31,7 @@
   - Modo função: `write(data, end)`.
   - Modo pipeline: `data | WRITE(end)`.
 
-[](load)[](tests/duas.cpp)[](fenced=cpp)
+[](load)[](guides/duas.cpp)[](fenced=cpp)
 
 ```cpp
 #include <iostream>
@@ -45,7 +48,7 @@ int main() {
 }
 ```
 
-[](load)[](tests/modopipe.cpp)[](fenced=cpp)
+[](load)[](guides/modopipe.cpp)[](fenced=cpp)
 
 ## Resumo das funções
 
@@ -110,7 +113,7 @@ Esse modo já está habilitado na biblioteca, mas pode ser inserido manualmente 
 
 Outra função útil para manipulação de strings foi inspirada no operator + do javascript, que permite converter uma string em um número.
 
-[](load)[](tests/str.cpp)[](fenced=cpp)
+[](load)[](guides/str.cpp)[](fenced=cpp)
 
 ```cpp
 #include <iostream>
@@ -644,6 +647,160 @@ int main() {
         | FILTER(FNT(p, p.idade > 20)) 
         | JOIN(", ") 
         | VERIFY("Maria:30"s);
+
+}
+```
+
+[](load)
+
+### UNPACK
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=unpack)
+
+```cpp
+/**
+ * Transforma de string para tupla dados os tipos de cada elemento e o char separador.
+ * 
+ * @tparam TS... Tipos a serem extraídos
+ * @param value String a ser convertida
+ * @param delimiter Caractere separador entre os elementos
+ * @return Tupla com os elementos convertidos
+ * 
+ * @warning unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
+ * @note https://github.com/senapk/cppaux#unpack
+ * 
+ */
+template <typename... TS>
+std::tuple<TS...> unpack(const std::string& line, char delimiter)
+```
+
+[](load)
+
+[](load)[](tests/unpack.cpp)[](fenced=cpp)
+
+```cpp
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+
+int main() {
+    "5:6:7"
+        | UNPACK<int, int, int>(':') 
+        | JOIN() 
+        | VERIFY("567"s);
+
+    "banana-5.68-8-c" 
+        | UNPACK<std::string, double, int, char>('-')
+        | JOIN(",") 
+        | VERIFY("banana,5.68,8,c"s);
+}
+```
+
+[](load)
+
+### FORMAT
+
+```cpp
+format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818) | WRITE(); 
+// O pi é 3.14 e o e é 2.72
+
+format("Meu vetor é {}", range(10)) | WRITE();
+// Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | WRITE(); 
+// Vetor com duas casas [1.13, 2.00, 3.30]
+
+format("Alinhado a esquerda 10 casas [{%-10s}]", "abacate") | WRITE();
+// Alinhado a esquerda 10 casas [abacate   ]
+
+format("Alinhado a direita 10 casas [{%10s}]", "abacate") | WRITE(); 
+// Alinhado a direita 10 casas [   abacate]
+```
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=format)
+
+```cpp
+/**
+ * Formata uma string com base nos argumentos passados utilizando um modelo de chaves para posicionar os argumentos.
+ * Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
+ * Não primitivos são formatados de acordo com a função TOSTR
+ * 
+ * @param std::string fmt: O texto com os {} para substituir pelos argumentos
+ * @param Args ...args: Os argumentos a serem substituídos
+ * @return std::string: O texto formatado
+ * 
+ * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @note https://github.com/senapk/cppaux#format
+ * 
+ */
+template<typename... Args>
+std::string format(std::string fmt, Args ...args)
+```
+
+[](load)
+
+[](load)[](tests/format.cpp)[](fenced=cpp)
+
+```cpp
+#include "fn.hpp"
+using namespace fn;
+
+int main() {
+    "Contando de 1 a 10 {}"s 
+        | FORMAT(range(1,11)) 
+        | VERIFY("Contando de 1 a 10 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"s);
+    "{} {} tem {} anos" 
+        | FORMAT("jose"s, 5) 
+        | VERIFY("jose 5 tem  anos"s);
+    "{}, eu {} {%02d} bananas {}." 
+        | FORMAT("Hoje", "comi", 5, "maduras") 
+        | VERIFY("Hoje, eu comi 05 bananas maduras."s);
+    "Eu ({%-10s}) {%02d} bananas{}" 
+        | FORMAT("comi"s, 5, ".") 
+        | VERIFY("Eu (comi      ) 05 bananas."s);
+}
+```
+
+[](load)
+
+### SPLIT
+
+```cpp
+split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
+split("a,b,c", ',') | WRITE(); // [a, b, c]
+split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
+split("eu gosto de comer    banana") | WRITE(); // [eu, gosto, de, comer, , , , banana]")
+```
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=split)
+
+```cpp
+/**
+ * Transforma uma string em um vetor de strings, separando pelo delimitador
+ * 
+ * @param content String a ser separada
+ * @param delimiter Caractere delimitador
+ * @return Vetor de strings
+ * 
+ * @note https://github.com/senapk/cppaux#split
+ */
+inline std::vector<std::string> split(std::string content, char delimiter = ' ')
+```
+
+[](load)
+
+[](load)[](tests/split.cpp)[](fenced=cpp)
+
+```cpp
+#include "fn.hpp"
+using namespace fn;
+
+int main() {
+    split("a,b,c", ',') | TOSTR() | VERIFY("[a, b, c]"s);
+    "gato mato rato" | SPLIT()    | TOSTR() | VERIFY("[gato, mato, rato]"s);
+    "1,2,3,4,5"      | SPLIT(',') | TOSTR() | VERIFY("[1, 2, 3, 4, 5]"s);
+    split("eu gosto de comer    banana") | TOSTR() 
+        | VERIFY("[eu, gosto, de, comer, , , , banana]"s);
 
 }
 ```
