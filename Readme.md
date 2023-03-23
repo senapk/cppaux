@@ -6,18 +6,20 @@
 - [Resumo das funções](#resumo-das-funções)
 - [Documentação](#documentação)
   - [String e Operador +](#string-e-operador-)
-  - [PIPE](#pipe)
-  - [TOSTR](#tostr)
-  - [JOIN](#join)
   - [WRITE](#write)
+  - [TOSTR](#tostr)
+  - [FORMAT](#format)
+  - [JOIN](#join)
   - [RANGE](#range)
-  - [VERIFY](#verify)
-  - [FNT](#fnt)
   - [SLICE](#slice)
   - [FILTER](#filter)
-  - [UNPACK](#unpack)
-  - [FORMAT](#format)
+  - [MAP](#map)
   - [SPLIT](#split)
+  - [UNPACK](#unpack)
+  - [PIPE](#pipe)
+  - [FNT](#fnt)
+  - [ZIP](#zip)
+  - [ZIPWITH](#zipwith)
 [](toc)
 
 ## Duas opções de funções
@@ -144,42 +146,68 @@ int main() {
 
 [](load)
 
-### PIPE
+### WRITE
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=pipe)
+[](load)[](fn.hpp)[](fenced=cpp:extract=write)
 
 ```cpp
 /**
- * @brief Functor para criação de funções Pipeline.
+ * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
  * 
- * PIPE é um functor, ou seja, uma struct que após instanciada, funciona como uma função.
- * Ela é construída passando uma função que recebe um único parâmetro qualquer.
- * O PIPE então guarda essa função para que possa ser executada em pipeline ou invocada diretamente.
+ * @param data Dado a ser transformado em string
+ * @param end String de quebra de linha
+ * @return Dado original
  * 
- * @param fn função a ser guardada
+ * @warning std::vector<int> {1, 2, 3} | WRITE();
  * 
- * @warning 5 | PIPE([](int x){return x * 2;}) | WRITE(); // 10
- * @note https://github.com/senapk/cppaux/#pipe
+ * @note https://github.com/senapk/cppaux#write
  */
-template<typename FUNCTION> 
-struct PIPE
+template <typename PRINTABLE>
+PRINTABLE write(PRINTABLE data, std::string end = "\n") 
 ```
 
 [](load)
 
-[](load)[](tests/pipe.cpp)[](fenced=cpp)
+[](load)[](tests/write.cpp)[](fenced=cpp)
 
 ```cpp
 #include <iostream>
+#include <memory>
 #include "fn.hpp"
 using namespace fn;
+
+struct Pessoa {
+    std::string nome;
+    int idade;
+public:
+    Pessoa(std::string nome, int idade) : nome(nome), idade(idade) {}
+};
+std::ostream& operator<<(std::ostream& os, const Pessoa& p) {
+    return os << p.nome << ":" << p.idade;
+}
+
 int main() {
-    auto fn = PIPE([](int x) { return 2 * x; });
-    fn(1) | WRITE(); // 2
-    fn(2) | WRITE(); // 4
-    fn(fn(3)) | WRITE(); // 12
-    5 | fn | WRITE(); // 10
-    5 | fn | fn | fn | WRITE(); // 40
+    // funciona com primitivos
+    5   | WRITE(); //5
+    4.5 | WRITE(); //4.5
+
+    // e quaisquer combinação de containers e tipos primitivos
+    std::vector<int>{1,2,3}         | WRITE(); //[1, 2, 3]
+    std::list<float>{1.5,2.5, 3.5}  | WRITE(); //[1.5, 2.5, 3.5]
+    std::make_pair("ovo", "queijo") | WRITE(); //(ovo, queijo)
+    std::make_tuple(1,2.3,"tres")   | WRITE(); //(1, 2.3, tres)
+
+    // após impressão, ele devolve o valor original
+    // dá pra mudar o fim de linha passando um argumento
+    5   | WRITE(" eh cinco\n")                 //5 eh cinco
+        | WRITE(" nao eh seis\n");             //5 nao eh seis
+
+    // para imprimir classes, é necessário sobrecarregar a função operator <<
+    std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}} | WRITE(); //[Joao:5, Maria:6]
+
+    // tudo que pode ser transformado pelo tostr, pode ser enviado diretamente para o WRITE
+    std::make_shared<Pessoa>("Joao", 5) | WRITE(); //Joao:5
+
 }
 ```
 
@@ -229,67 +257,132 @@ using namespace fn;
 int main() {
 
     // modo função
-    tostr(5.6123, "%.2f")                     | VERIFY("5.61"s);
-    tostr(std::vector<int> {1, 2, 3})         | VERIFY("[1, 2, 3]"s);
-    tostr(std::pair<int, int> {1, 2}, "%03d") | VERIFY("(001, 002)"s);
-    tostr("banana", "<%-8s>")                 | VERIFY("<banana  >"s);
+    tostr(5.6123, "%.2f")                     | WRITE(); // 5.61
+    tostr(std::vector<int> {1, 2, 3})         | WRITE(); // [1, 2, 3]
+    tostr(std::pair<int, int> {1, 2}, "%03d") | WRITE(); // (001, 002)
+    tostr("banana", "<%-8s>")                 | WRITE(); // <banana  >
 
     // números
-    5.6123 | TOSTR("%.2f")     | VERIFY("5.61"s);
-    5      | TOSTR("%02d")     | VERIFY("05"s);
+    5.6123 | TOSTR("%.2f")     | WRITE(); // 5.61
+    5      | TOSTR("%02d")     | WRITE(); // 05
 
     // alinhamento de string
-    "banana"  | TOSTR("%-8s")  | VERIFY("banana  "s);
-    "banana"  | TOSTR("%8s")   | VERIFY("  banana"s);
+    "banana"  | TOSTR(".%-8s.")  | WRITE(); // .banana  .
+    "banana"  | TOSTR(".%8s.")   | WRITE(); // .  banana.
 
     // containers
-    std::vector<int> {1, 2, 3}         | TOSTR() | VERIFY("[1, 2, 3]"s);
-    std::list<int> {1, 2, 3}           | TOSTR() | VERIFY("[1, 2, 3]"s);
-    std::array<int, 3> {1, 2, 3}       | TOSTR() | VERIFY("[1, 2, 3]"s);
+    // a função write já chama a função tostr para não primitivos
+    std::vector<int> {1, 2, 3}         | WRITE(); // [1, 2, 3]
+    std::list<int> {1, 2, 3}           | WRITE(); // [1, 2, 3]
+    std::array<int, 3> {1, 2, 3}       | WRITE(); // [1, 2, 3]
     
-
     // pair
-    std::pair<int, int> {1, 2}         | TOSTR() | VERIFY("(1, 2)"s);
+    std::pair<int, int> {1, 2}         | WRITE(); // (1, 2)
 
     // tuples
-    std::make_tuple(1, 5.42, "banana") | TOSTR() | VERIFY("(1, 5.42, banana)"s);
+    std::make_tuple(1, 5.42, "banana") | WRITE(); // (1, 5.42, banana)
 
     // estruturas aninhadas
-    std::make_pair(std::make_pair(4, "ovo"), "chiclete") | TOSTR() | VERIFY("((4, ovo), chiclete)"s);
+    std::make_pair(std::make_pair(4, "ovo"), "chiclete") | WRITE(); // ((4, ovo), chiclete)
 
     // formatação recursiva
     std::make_tuple(1, 2, 3) 
         | TOSTR("%03d") 
-        | VERIFY("(001, 002, 003)"s, "str");
+        | WRITE(); // (001, 002, 003)
 
     std::make_pair(std::vector<int>{1,2,3}, std::vector<int>{4,5,6}) 
-        | TOSTR("%03d") 
-        | VERIFY("([001, 002, 003], [004, 005, 006])"s, "str");
-
+        | TOSTR("%03d")
+        | WRITE(); // ([001, 002, 003], [004, 005, 006])
 
     // mapas
-    std::map<int, int>{{1, 2}, {3, 4}} | TOSTR() | VERIFY("[(1, 2), (3, 4)]"s);
-    std::map<std::string, int>{{"c", 1}, {"a", 2}} | TOSTR() | VERIFY("[(a, 2), (c, 1)]"s);
-    std::unordered_map<int, int>{{1, 2}, {3, 4}}             | TOSTR() | VERIFY("[(3, 4), (1, 2)]"s);
-    std::unordered_map<std::string, int>{{"c", 1}, {"a", 2}} | TOSTR() | VERIFY("[(a, 2), (c, 1)]"s);
+    std::map<int, int>{{1, 2}, {3, 4}} | WRITE(); // {(1, 2), (3, 4)}
+    std::map<std::string, int>{{"c", 1}, {"a", 2}} | WRITE(); // {(a, 2), (c, 1)}
+    std::unordered_map<int, int>{{1, 2}, {3, 4}}   | WRITE(); // {(3, 4), (1, 2)}
+    std::unordered_map<std::string, int>{{"c", 1}, {"a", 2}} | WRITE(); // {(c, 1), (a, 2)}
 
     // sets
-    std::set<int> {1, 2, 3}            | TOSTR() | VERIFY("[1, 2, 3]"s);
-    std::unordered_set<int>{1, 2, 3}          | TOSTR() | VERIFY("[3, 2, 1]"s);
-    std::unordered_set<std::string>{"c", "a"} | TOSTR() | VERIFY("[a, c]"s);
-
-    // bool não são alterados
-    std::vector<bool> {true, false, true} | TOSTR() | VERIFY("[1, 0, 1]"s);
+    std::set<int> {1, 2, 3}                   | WRITE(); // {1, 2, 3}
+    std::unordered_set<int>{1, 2, 3}          | WRITE(); // {3, 2, 1}
+    std::unordered_set<std::string>{"c", "a"} | WRITE(); // {a, c}
 
     // optional são impressos como o valor contido ou null
     std::vector<std::optional<int>> {1, 2, std::nullopt} 
-        | TOSTR() 
-        | VERIFY("[1, 2, null]"s);
+        | WRITE(); // [1, 2, null]
 
     // shared_ptr são impressos como o valor contido ou null
     std::vector<std::shared_ptr<int>>{std::make_shared<int>(1), std::make_shared<int>(2), nullptr}
-        | TOSTR()
-        | VERIFY("[1, 2, null]"s);
+        | WRITE(); // [1, 2, null]
+
+    true | WRITE(); // true
+    false | WRITE(); // false
+    std::make_pair(true, 5.43) | WRITE(); // (true, 5.43)
+    std::list<bool> {true, false, true} | WRITE(); // [true, false, true]
+
+    // vector são otimizados automaticamente como um array de bits
+    std::vector<bool> {true, false, true} | WRITE(); // [0, 1, 0]
+}
+```
+
+[](load)
+
+### FORMAT
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=format)
+
+```cpp
+/**
+ * Formata uma string com base nos argumentos passados utilizando um modelo de chaves para posicionar os argumentos.
+ * Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
+ * Não primitivos são formatados de acordo com a função TOSTR
+ * 
+ * @param std::string fmt: O texto com os {} para substituir pelos argumentos
+ * @param Args ...args: Os argumentos a serem substituídos
+ * @return std::string: O texto formatado
+ * 
+ * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @note https://github.com/senapk/cppaux#format
+ * 
+ */
+template<typename... Args>
+std::string format(std::string fmt, Args ...args)
+```
+
+[](load)
+
+[](load)[](tests/format.cpp)[](fenced=cpp)
+
+```cpp
+#include "fn.hpp"
+using namespace fn;
+
+int main() {
+
+    format("O {} é {%0.2f} e o {} é {%0.4f}", "pi", 3.141592653, "e", 2.7182818) | WRITE(); 
+    // O pi é 3.14 e o e é 2.7218
+
+    format("Meu vetor é {}", range(10)) | WRITE();
+    // Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | WRITE(); 
+    // Vetor com duas casas [1.13, 2.00, 3.30]
+
+    format("Alinhado a esquerda 10 casas [{%-10s}]", "abacate") | WRITE();
+    // Alinhado a esquerda 10 casas [abacate   ]
+
+    format("Alinhado a direita 10 casas [{%10s}]", "abacate") | WRITE(); 
+    // Alinhado a direita 10 casas [   abacate]
+
+    "Contando de 1 a 10 {}"s | FORMAT(range(1,11)) | WRITE(); 
+    // Contando de 1 a 10 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    "{} {} tem {} anos" | FORMAT("jose"s, 5) | WRITE(); 
+    // jose 5 tem  anos
+
+    "{}, eu {} {%02d} bananas {}." | FORMAT("Hoje", "comi", 5, "maduras") | WRITE(); 
+    // Hoje, eu comi 05 bananas maduras.
+
+    "Eu ({%-10s}) {%02d} bananas{}" | FORMAT("comi"s, 5, '.') | WRITE(); 
+    // Eu (comi      ) 05 bananas.
 }
 ```
 
@@ -331,83 +424,23 @@ using namespace fn;
 
 int main() {
     std::vector<int> v = {1, 2, 3, 4, 5};
-    v | JOIN(", ") | VERIFY("1, 2, 3, 4, 5"s);
-    v | JOIN()     | VERIFY("12345"s);
+    v | JOIN(", ") | WRITE(); // 1, 2, 3, 4, 5
+    v | JOIN()     | WRITE(); // 12345
 
     std::list<int> {1, 2, 3, 4, 5}
-        | JOIN(", ", "{]") | VERIFY("{1, 2, 3, 4, 5]"s);
+        | JOIN(", ", "{]") 
+        | WRITE(); // {1, 2, 3, 4, 5]
 
-    "abced"s | JOIN(", ") | VERIFY("a, b, c, e, d"s);
+    "abced"s | JOIN(", ") | WRITE(); // a, b, c, e, d
 
-    std::make_tuple("ovo", 1, 1.3) | JOIN(", ", "<>")          | VERIFY("<ovo, 1, 1.3>"s);
-    std::make_pair("ovo", 1)       | JOIN(":") | TOSTR("<%s>") | VERIFY("ovo:1"s);
-}
-```
+    std::make_tuple("ovo", 1, 1.3) 
+        | JOIN(", ", "<>")
+        | WRITE(); // <ovo, 1, 1.3>
 
-[](load)
-
-### WRITE
-
-[](load)[](fn.hpp)[](fenced=cpp:extract=write)
-
-```cpp
-/**
- * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
- * 
- * @param data Dado a ser transformado em string
- * @param end String de quebra de linha
- * @return Dado original
- * 
- * @warning std::vector<int> {1, 2, 3} | WRITE();
- * 
- * @note https://github.com/senapk/cppaux#write
- */
-template <typename PRINTABLE>
-PRINTABLE write(PRINTABLE data, std::string end = "\n") 
-```
-
-[](load)
-
-[](load)[](tests/write.cpp)[](fenced=cpp)
-
-```cpp
-#include <iostream>
-#include <memory>
-#include "fn.hpp"
-using namespace fn;
-
-struct Pessoa {
-    std::string nome;
-    int idade;
-public:
-    Pessoa(std::string nome, int idade) : nome(nome), idade(idade) {}
-};
-std::ostream& operator<<(std::ostream& os, const Pessoa& p) {
-    return os << p.nome << ":" << p.idade;
-}
-
-int main() {
-    // funciona com primitivos
-    5 | WRITE(); //5
-    4.5 | WRITE(); //4.5
-
-    // e quaisquer combinação de containers e tipos primitivos
-    std::vector<int>{1,2,3}         | WRITE(); //[1, 2, 3]
-    std::list<float>{1.5,2.5, 3.5}  | WRITE(); //[1.5, 2.5, 3.5]
-    std::make_pair("ovo", "queijo") | WRITE(); //(ovo, queijo)
-    std::make_tuple(1,2.3,"tres")   | WRITE(); //(1, 2.3, tres)
-
-    // após impressão, ele devolve o valor original
-    // dá pra mudar o fim de linha passando um argumento
-    5   | WRITE(" eh cinco\n")                 //5 eh cinco
-        | WRITE(" nao eh seis\n");             //5 nao eh seis
-
-    // para imprimir classes, é necessário sobrecarregar a função operator <<
-    std::vector<Pessoa> {{"Joao", 5}, {"Maria", 6}} | WRITE(); //[Joao:5, Maria:6]
-
-    // tudo que pode ser transformado pelo tostr, pode ser enviado diretamente para o WRITE
-    std::make_shared<Pessoa>("Joao", 5) | WRITE(); //Joao:5
-
+    std::make_pair("ovo", 1)
+        | JOIN(":")
+        | TOSTR("<%s>")
+        | WRITE(); // <ovo:1>
 }
 ```
 
@@ -448,95 +481,35 @@ int main() {
     range(0, 10, 2)  | WRITE(); // [0, 2, 4, 6, 8]
     range(10, 0, -1) | WRITE(); // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 
-    range(1, 5) | JOIN() | VERIFY("1234"s, "range 1");
-    range(5)    | JOIN() | VERIFY("01234"s, "range 2");
-    range(10, -1, -2) | JOIN(", ") | VERIFY("10, 8, 6, 4, 2, 0"s, "range 3");
+    range(1, 5) | WRITE(); // [1, 2, 3, 4]
+    range(5)    | WRITE(); // [0, 1, 2, 3, 4]
+    range(10, -1, -2) | WRITE(); // [10, 8, 6, 4, 2, 0]
 
-    range(26) | MAP([](int x) -> char {return 'a' + x;}) | JOIN() | VERIFY("abcdefghijklmnopqrstuvwxyz"s, "range");
+    range(26) 
+        | MAP([](int x) -> char {return 'a' + x;}) 
+        | WRITE() // [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z]
+        | JOIN()
+        | WRITE(); // abcdefghijklmnopqrstuvwxyz
 
-    range(10, -1, -2) | JOIN(", ") | VERIFY("10, 8, 6, 4, 2, 0"s, "iota");
-    0 | RANGE(5, 2) | JOIN() | VERIFY("024"s, "iota");
-    range(-10, 10, 2) | JOIN(",") | VERIFY("-10,-8,-6,-4,-2,0,2,4,6,8"s, "iota");
-    range(10, 0, -1) | JOIN() | VERIFY("10987654321"s, "iota");
+    range(10, -1, -2)
+        | WRITE(); // [10, 8, 6, 4, 2, 0]
+
+    0 | RANGE(5, 2) | WRITE(); // [0, 2, 4]
+
+    range(-10, 10, 2) | WRITE(); // [-10, -8, -6, -4, -2, 0, 2, 4, 6, 8]
+
+    range(10, 0, -1) | WRITE(); // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
     
     auto tochar = [](int x) -> char {return 'a' + x;};
-    range(26) | MAP(tochar)  | JOIN() | VERIFY("abcdefghijklmnopqrstuvwxyz"s, "iota");
-    range(25, -1,  -1) | MAP(tochar)  | JOIN() | VERIFY("zyxwvutsrqponmlkjihgfedcba"s, "iota");
-}
-```
+    range(26) 
+        | MAP(tochar)  
+        | JOIN() 
+        | WRITE(); // abcdefghijklmnopqrstuvwxyz
 
-[](load)
-
-### VERIFY
-
-[](load)[](fn.hpp)[](fenced=cpp:extract=verify)
-
-```cpp
-/**
- * Verifica se o dado recebido é igual ao esperado.
- * Se não for, imprime o dado recebido e o esperado e encerra o programa.
- * Ambos os dados devem ser do mesmo tipo e são convertidos para string usando o tostr.
- * 
- * @param received Dado recebido
- * @param expected Dado esperado
- * @return Dado recebido
- * 
- * @note https://github.com/senapk/cppaux#verify
- * 
-*/
-template <typename PRINTABLE>
-PRINTABLE verify(PRINTABLE received, PRINTABLE expected, std::string label = "")
-```
-
-[](load)
-
-### FNT
-
-[](load)[](fn.hpp)[](fenced=cpp:extract=fnt)
-
-```cpp
-/**
- * Encurtador de função lambda para um único parâmetro e uma única operação a ser retornada.
- * O primeiro parâmetro é o nome da variável a ser utilizada, o segundo é a operação a ser realizada.
- * 
- * @param x Nome da variável
- * @param fx Operação a ser realizada
- * @return Função lambda
- * 
- * @note https://github.com/senapk/cppaux#fnt
- */
-#define FNT(x, fx)                  [] (auto x) { return fx; }
-```
-
-[](load)
-
-[](load)[](tests/fnt.cpp)[](fenced=cpp)
-
-```cpp
-#include <iostream>
-#include "fn.hpp"
-using namespace fn;
-
-int main() {
-    auto fn = FNT(x, x + 1);
-    fn(4) | WRITE();// 5
-
-    4   | PIPE(FNT(x, x + 1)) // 5
-        | PIPE(FNT(x, x * 2)) // 10
-        | WRITE(); // 10
-
-    5        | PIPE(FNT(x, x + 1)) | VERIFY(6, "FNT");
-    "banana" | PIPE(FNT(x, std::string(x) + "s")) | VERIFY("bananas"s, "FNT");
-    
-    int x = 8;
-    1 | PIPE([&x](auto z) {return x + z;}) | VERIFY(9, "FNT");
-
-    //dupla ação, chama função e retorna o proprio objeto
-    std::vector<int> {1, 2}
-        | PIPE(FNT(v, (v.push_back(3), v)))
-        | TOSTR() | VERIFY("[1, 2, 3]"s, "FNT");
-    
-    5 | PIPE([](auto x){int y = x + 1; return y;}) | VERIFY(6, "FNT");
+    range(25, -1,  -1)
+        | MAP(tochar)
+        | JOIN()
+        | WRITE(); // zyxwvutsrqponmlkjihgfedcba
 }
 ```
 
@@ -573,44 +546,50 @@ auto slice(CONTAINER container, int begin = 0)
 using namespace fn;
 
 int main() {
-    std::list<int> {1, 2, 3, 4} | SLICE() | PIPE(FNT(v, v[1])) | VERIFY(2, "vectorize");
-    "abcdef" | PIPE(FNT(v, v[1])) | VERIFY('b', "vectorize");
+    range(1, 10) | SLICE(2, 5)   | WRITE(); // [3, 4, 5]
+    range(10)    | SLICE(2, 5)   | WRITE(); // [2, 3, 4]
+    range(10)    | SLICE(1)      | WRITE(); // [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    range(10)    | SLICE(-1)     | WRITE(); // [9]
+    range(10)    | SLICE(-2)     | WRITE(); // [8, 9]
+    range(10)    | SLICE(-3, -1) | WRITE(); // [7, 8]
+    range(10)    | SLICE()       | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    range(10)    | SLICE(0, 0)   | WRITE(); // []
+    range(10)    | SLICE(0, 1)   | WRITE(); // [0]
+    range(10)    | SLICE(5, 2)   | WRITE(); // []
+    range(10)    | SLICE(5, -2)  | WRITE(); // [5, 6, 7]
+
+    std::string("banana") | SLICE(2, 5) | WRITE(); // nan
+
+    "abcdef" | TOSTR() | SLICE(2)     | WRITE(); // [c, d, e, f]
+    "abcdef" | TOSTR() | SLICE(2, -1) | WRITE(); // [c, d, e]
+    "abcdef" | TOSTR() | SLICE(3, -4) | WRITE(); // []
+
+    std::list<int> {1, 2, 3, 4} | SLICE(2, 5) | WRITE(); // [3, 4]
+
+    std::map<std::string, int> m = {{"jose", 5}, {"bianca", 6}, {"maria"s, 7}};
+    m   | SLICE(0, 2)
+        | MAP(FNT(x, x.first))
+        | WRITE(); // [jose, bianca]
+
+    std::list<int> {1, 2, 3, 4} 
+        | SLICE() // transforma em vetor
+        | PIPE(FNT(v, v[1])) // acessa o segundo elemento
+        | WRITE(); // 2 
 
     std::map<std::string, int> {{"c", 1}, {"a", 2}}
-        | SLICE()
-        | PIPE([](auto vet) { 
+        | SLICE() // transforma em vetor de pares
+        | PIPE([](auto vet) { //adiciona um par e retorna o vetor
             vet.push_back({"t", 8}); 
             return vet;
         })
-        | PIPE(FNT(vet, vet.back()))
-        | TOSTR()
-        | VERIFY("(t, 8)"s, "slice");
+        | PIPE(FNT(vet, vet.back())) //retorna o ultimo elemento
+        | WRITE(); // <t, 8>
 
 
-    range(1, 5)  | SLICE(0, 10)  | JOIN() | VERIFY("1234"s, "slice");
-
-    range(1, 10) | SLICE(2, 5)   | JOIN() | VERIFY("345"s, "slice");
-    range(10)    | SLICE(2, 5)   | JOIN() | VERIFY("234"s, "slice");
-    range(10)    | SLICE(1)      | JOIN() | VERIFY("123456789"s, "slice");
-    range(10)    | SLICE(-1)     | JOIN() | VERIFY("9"s, "slice");
-    range(10)    | SLICE(-2)     | JOIN() | VERIFY("89"s, "slice");
-    range(10)    | SLICE(-3, -1) | JOIN() | VERIFY("78"s, "slice");
-    range(10)    | SLICE()       | JOIN() | VERIFY("0123456789"s, "slice");
-    range(10)    | SLICE(0, 0)   | JOIN() | VERIFY(""s, "slice");
-    range(10)    | SLICE(0, 1)   | JOIN() | VERIFY("0"s, "slice");
-    range(10)    | SLICE(5, 2)   | JOIN() | VERIFY(""s, "slice");
-    range(10)    | SLICE(5, -2)  | JOIN() | VERIFY("567"s, "slice");
-
-    std::string("banana") | SLICE(2, 5) | JOIN() | VERIFY("nan"s, "slice");
-
-    "abcdef" | TOSTR() | SLICE(2)     | JOIN() | VERIFY("cdef"s, "slice texto");
-    "abcdef" | TOSTR() | SLICE(2, -1) | JOIN() | VERIFY("cde"s, "slice texto");
-    "abcdef" | TOSTR() | SLICE(3, -4) | JOIN() | VERIFY(""s, "slice texto");
-
-    std::list<int> {1, 2, 3, 4} | SLICE(2, 5) | JOIN() | VERIFY("34"s, "slice");
-
-    std::map<std::string, int> m = {{"jose", 5}, {"bianca", 6}, {"maria"s, 7}};
-    m | SLICE(0, 2) | MAP(FNT(x, x.first)) | JOIN(",") | VERIFY("bianca,jose"s, "slice");
+    range(1, 5) 
+        | WRITE() // [1, 2, 3, 4]
+        | SLICE(0, 10) 
+        | WRITE(); // [1, 2, 3, 4]
 }
 ```
 
@@ -651,20 +630,105 @@ std::ostream& operator<<(std::ostream& os, const Pessoa& p) {
 }
 
 int main() {
-    range(0, 10) | FILTER(FNT(x, x % 2 == 0)) | JOIN() | VERIFY("02468"s);
-    "banana"s    | FILTER(FNT(x, x == 'a'))   | JOIN() | VERIFY("aaa"s);
-    "banana"s    | FILTER(FNT(x, x != 'a'))   | JOIN() | VERIFY("bnn"s);
+    range(0, 10) | FILTER(FNT(x, x % 2 == 0)) | WRITE(); // [0, 2, 4, 6, 8, 10]
+    "banana"s    | FILTER(FNT(x, x == 'a'))   | WRITE(); // [a, a, a]
+    "banana"s    | FILTER(FNT(x, x != 'a'))   | WRITE(); // [b, n, n]
 
     std::vector<int> {1, 2, 3, 4, 5}
         | FILTER(FNT(x, x % 2 == 0)) 
-        | JOIN(", ") 
-        | VERIFY("2, 4"s);
+        | WRITE(); // [2, 4]
 
     std::vector<Pessoa>{{"Joao", 20}, {"Maria", 30}}
         | FILTER(FNT(p, p.idade > 20)) 
-        | JOIN(", ") 
-        | VERIFY("Maria:30"s);
+        | WRITE(); // [Maria:30]
 
+}
+```
+
+[](load)
+
+### MAP
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=map)
+
+```cpp
+/**
+ * Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container
+ * 
+ * @param container Container a ser mapeado
+ * @param fn Função a ser aplicada em cada elemento do container
+ * @return Vector com os elementos resultantes da aplicação da função
+ * 
+ * @note https://github.com/senapk/cppaux#map
+ */
+template<typename CONTAINER, typename FUNCTION>
+auto map(CONTAINER container, FUNCTION fn)
+```
+
+[](load)
+
+[](load)[](tests/map.cpp)[](fenced=cpp)
+
+```cpp
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+
+struct Pessoa {
+    std::string nome;
+    int idade;
+
+    Pessoa(std::string nome = "", int idade = 0): nome{nome}, idade{idade} {}
+};
+
+int main() {
+    std::vector<int> v = {1, 2, 3, 4, 5};
+        v   | MAP(FNT(x, x + 1)) 
+            | WRITE(); // [2, 3, 4, 5, 6]
+
+        std::vector<Pessoa> vp = {{"Joao", 20}, {"Maria", 30}};
+        vp  | MAP(FNT(p, p.idade + 1)) 
+            | WRITE(); // [21, 31]
+
+        "abcde"s
+            | MAP([](char c) -> char {return c + 1;}) 
+            | WRITE(); // [b, c, d, e, f]
+}
+```
+
+[](load)
+
+### SPLIT
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=split)
+
+```cpp
+/**
+ * Transforma uma string em um vetor de strings, separando pelo delimitador
+ * 
+ * @param content String a ser separada
+ * @param delimiter Caractere delimitador
+ * @return Vetor de strings
+ * 
+ * @note https://github.com/senapk/cppaux#split
+ */
+inline std::vector<std::string> split(std::string content, char delimiter = ' ')
+```
+
+[](load)
+
+[](load)[](tests/split.cpp)[](fenced=cpp)
+
+```cpp
+#include "fn.hpp"
+using namespace fn;
+
+int main() {
+
+    split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
+    split("a,b,c", ',')                    | WRITE(); // [a, b, c]
+    split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
+    split("eu gosto de comer    banana")   | WRITE(); // [eu, gosto, de, comer, , , , banana]")
 }
 ```
 
@@ -704,120 +768,190 @@ using namespace fn;
 int main() {
     "5:6:7"
         | UNPACK<int, int, int>(':') 
-        | JOIN() 
-        | VERIFY("567"s);
+        | WRITE(); // (5, 6, 7)
 
     "banana-5.68-8-c" 
         | UNPACK<std::string, double, int, char>('-')
-        | JOIN(",") 
-        | VERIFY("banana,5.68,8,c"s);
+        | WRITE(); // (banana, 5.68, 8, c)
 }
 ```
 
 [](load)
 
-### FORMAT
+### PIPE
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=format)
+[](load)[](fn.hpp)[](fenced=cpp:extract=pipe)
 
 ```cpp
 /**
- * Formata uma string com base nos argumentos passados utilizando um modelo de chaves para posicionar os argumentos.
- * Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
- * Não primitivos são formatados de acordo com a função TOSTR
+ * @brief Functor para criação de funções Pipeline.
  * 
- * @param std::string fmt: O texto com os {} para substituir pelos argumentos
- * @param Args ...args: Os argumentos a serem substituídos
- * @return std::string: O texto formatado
+ * PIPE é um functor, ou seja, uma struct que após instanciada, funciona como uma função.
+ * Ela é construída passando uma função que recebe um único parâmetro qualquer.
+ * O PIPE então guarda essa função para que possa ser executada em pipeline ou invocada diretamente.
  * 
- * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
- * @note https://github.com/senapk/cppaux#format
+ * @param fn função a ser guardada
  * 
+ * @warning 5 | PIPE([](int x){return x * 2;}) | WRITE(); // 10
+ * @note https://github.com/senapk/cppaux/#pipe
  */
-template<typename... Args>
-std::string format(std::string fmt, Args ...args)
+template<typename FUNCTION> 
+struct PIPE
 ```
 
 [](load)
 
-[](load)[](tests/format.cpp)[](fenced=cpp)
+[](load)[](tests/pipe.cpp)[](fenced=cpp)
+
+```cpp
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+int main() {
+    auto fn = PIPE([](int x) { return 2 * x; });
+    fn(1) | WRITE(); // 2
+    fn(2) | WRITE(); // 4
+    fn(fn(3)) | WRITE(); // 12
+    5 | fn | WRITE(); // 10
+    5 | fn | fn | fn | WRITE(); // 40
+}
+```
+
+[](load)
+
+### FNT
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=fnt)
+
+```cpp
+/**
+ * Encurtador de função lambda para um único parâmetro e uma única operação a ser retornada.
+ * O primeiro parâmetro é o nome da variável a ser utilizada, o segundo é a operação a ser realizada.
+ * 
+ * @param x Nome da variável
+ * @param fx Operação a ser realizada
+ * @return Função lambda
+ * 
+ * @note https://github.com/senapk/cppaux#fnt
+ */
+#define FNT(x, fx)                  [] (auto x) { return fx; }
+```
+
+[](load)
+
+[](load)[](tests/fnt.cpp)[](fenced=cpp)
+
+```cpp
+#include <iostream>
+#include "fn.hpp"
+using namespace fn;
+
+int main() {
+    auto fn = FNT(x, x + 1);
+
+    fn(4) | WRITE();// 5
+
+    4   | PIPE(FNT(x, x + 1))
+        | PIPE(FNT(x, x * 2))
+        | WRITE(); // 10
+
+    5        | PIPE(FNT(x, x + 1)) | WRITE(); // 6
+    "banana" | PIPE(FNT(x, std::string(x) + "s")) | WRITE(); // bananas
+    
+    int x = 8;
+    1 | PIPE([&x](auto z) {return x + z;}) | WRITE(); // 9
+
+    5 | PIPE([](auto x){int y = x + 1; return y;}) | WRITE(); // 6
+}
+```
+
+[](load)
+
+### ZIP
+    
+[](load)[](fn.hpp)[](fenced=cpp:extract=zip)
+
+```cpp
+/**
+ * Une dois containers em um vetor de pares limitado ao menor tamanho dos dois containers.
+ * 
+ * @param container_a primeiro container
+ * @param container_b segundo container
+ * @return Vetor de pares
+ * 
+ * @warning zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
+ * @note https://github.com/senapk/cppaux#zip
+ * 
+ */
+template<typename CONTAINER_A, typename CONTAINER_B>
+auto zip(CONTAINER_A A, CONTAINER_B B)
+```
+
+[](load)
+
+[](load)[](tests/zip.cpp)[](fenced=cpp)
 
 ```cpp
 #include "fn.hpp"
 using namespace fn;
 
 int main() {
+        range(1, 5) | ZIP(range(10, 20)) 
+            | WRITE(); // [(1, 10), (2, 11), (3, 12), (4, 13)]
 
-    format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818) | WRITE(); 
-    // O pi é 3.14 e o e é 2.72
-
-    format("Meu vetor é {}", range(10)) | WRITE();
-    // Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-    format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | WRITE(); 
-    // Vetor com duas casas [1.13, 2.00, 3.30]
-
-    format("Alinhado a esquerda 10 casas [{%-10s}]", "abacate") | WRITE();
-    // Alinhado a esquerda 10 casas [abacate   ]
-
-    format("Alinhado a direita 10 casas [{%10s}]", "abacate") | WRITE(); 
-    // Alinhado a direita 10 casas [   abacate]
-
-    "Contando de 1 a 10 {}"s 
-        | FORMAT(range(1,11)) 
-        | VERIFY("Contando de 1 a 10 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"s);
-    "{} {} tem {} anos" 
-        | FORMAT("jose"s, 5) 
-        | VERIFY("jose 5 tem  anos"s);
-    "{}, eu {} {%02d} bananas {}." 
-        | FORMAT("Hoje", "comi", 5, "maduras") 
-        | VERIFY("Hoje, eu comi 05 bananas maduras."s);
-    "Eu ({%-10s}) {%02d} bananas{}" 
-        | FORMAT("comi"s, 5, ".") 
-        | VERIFY("Eu (comi      ) 05 bananas."s);
+        zip(range(10, 20), range(1, 5))
+            | WRITE(); // [(10, 1), (11, 2), (12, 3), (13, 4)]
+            
+        "banana"s | ZIP(range(1, 10)) 
+            | WRITE(); // [(b, 1), (a, 2), (n, 3), (a, 4), (n, 5), (a, 6)]
 }
 ```
 
 [](load)
 
-### SPLIT
+### ZIPWITH
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=split)
+[](load)[](fn.hpp)[](fenced=cpp:extract=zipwith)
 
 ```cpp
 /**
- * Transforma uma string em um vetor de strings, separando pelo delimitador
+ * Une dois containers em um único container limitado ao menor tamanho dos dois containers
+ * colocando o resultado da função fnjoin em cada par no container de saída.
  * 
- * @param content String a ser separada
- * @param delimiter Caractere delimitador
- * @return Vetor de strings
+ * @param container_a primeiro container
+ * @param container_b segundo container
+ * @return Vetor com os resultados
  * 
- * @note https://github.com/senapk/cppaux#split
+ * @warning zipwith(range(10), "pterodactilo"s, FNT2(x, y, tostr(x) + y)) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]
+ * @note https://github.com/senapk/cppaux#zipwith
+ * 
  */
-inline std::vector<std::string> split(std::string content, char delimiter = ' ')
+template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
+auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin)
 ```
 
 [](load)
 
-[](load)[](tests/split.cpp)[](fenced=cpp)
+[](load)[](tests/zipwith.cpp)[](fenced=cpp)
 
 ```cpp
 #include "fn.hpp"
 using namespace fn;
 
 int main() {
+    range(1, 20) | ZIPWITH(range(11, 15), FNT2(x, y, x + y)) 
+        | WRITE(); // [12, 14, 16, 18]
 
-    split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
-    split("a,b,c", ',') | WRITE(); // [a, b, c]
-    split("eu gosto de comer banana", ' ') | WRITE(); // [eu, gosto, de, comer, banana]")
-    split("eu gosto de comer    banana") | WRITE(); // [eu, gosto, de, comer, , , , banana]")
+    zipwith(range(1, 5), range(11, 20), FNT2(x, y, tostr(x) + tostr(y)))
+        | WRITE(); // [111, 212, 313, 414]
 
-    split("a,b,c", ',') | TOSTR() | VERIFY("[a, b, c]"s);
-    "gato mato rato"    | SPLIT()    | TOSTR() | VERIFY("[gato, mato, rato]"s);
-    "1,2,3,4,5"         | SPLIT(',') | TOSTR() | VERIFY("[1, 2, 3, 4, 5]"s);
-    split("eu gosto de comer    banana") | TOSTR() 
-        | VERIFY("[eu, gosto, de, comer, , , , banana]"s);
+    //junta dois char em uma string
+    auto fnjoin = FNT2(x, y, (std::string{x, y}));
+    "ABCDEF"s | ZIPWITH("abcdef"s, fnjoin)
+        | WRITE(); // [Aa, Bb, Cc, Dd, Ee, Ff]
 
+    zipwith(range(10), "pterodactilo"s, FNT2(x, y, tostr(x) + y))
+        | WRITE(); // [0p, 1t, 2e, 3r, 4o, 5d, 6a, 7c, 8t, 9i]
 }
 ```
 

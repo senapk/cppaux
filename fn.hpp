@@ -712,7 +712,7 @@ auto ZIP(CONTAINER_B B) {
  * @return Vetor com os resultados
  * 
  * @warning zipwith(range(10), "pterodactilo"s, FNT2(x, y, tostr(x) + y)) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]
- * @note https://github.com/senapk/cppaux#unzip
+ * @note https://github.com/senapk/cppaux#zipwith
  * 
  */
 template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
