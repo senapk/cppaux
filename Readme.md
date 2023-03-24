@@ -6,6 +6,7 @@
 - [Resumo das funções](#resumo-das-funções)
 - [Documentação](#documentação)
   - [String e Operador +](#string-e-operador-)
+  - [INPUT](#input)
   - [WRITE](#write)
   - [TOSTR](#tostr)
   - [FORMAT](#format)
@@ -146,6 +147,42 @@ int main() {
 
 [](load)
 
+### INPUT
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=input)
+
+```cpp
+/**
+ * Extrai uma linha inteira e retorna como string
+ * O padrão é o std::cin, mas pode ser um fluxo ou arquivo
+ * Se não houver mais linhas, lança uma exceção
+ * 
+ * @param source (opcional) de onde ler a linha
+ * @return linha lida
+ * 
+ * @warning auto line = input();
+ * 
+ * @note https://github.com/senapk/cppaux#input
+ */
+inline std::string input(std::istream & is = std::cin)
+```
+
+[](load)
+
+[](load)[](tests/input.cpp)[](fenced=cpp)
+
+```cpp
+#include "fn.hpp"
+using namespace fn;
+
+int main() {
+    auto line = input();
+    line | WRITE();
+}
+```
+
+[](load)
+
 ### WRITE
 
 [](load)[](fn.hpp)[](fenced=cpp:extract=write)
@@ -155,10 +192,10 @@ int main() {
  * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
  * 
  * @param data Dado a ser transformado em string
- * @param end String de quebra de linha
+ * @param end (opcional) String de finalização
  * @return Dado original
  * 
- * @warning std::vector<int> {1, 2, 3} | WRITE();
+ * @warning write(std::vector<int> {1, 2, 3}); // [1, 2, 3]
  * 
  * @note https://github.com/senapk/cppaux#write
  */
@@ -171,8 +208,6 @@ PRINTABLE write(PRINTABLE data, std::string end = "\n")
 [](load)[](tests/write.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
-#include <memory>
 #include "fn.hpp"
 using namespace fn;
 
@@ -233,7 +268,7 @@ int main() {
  * Para classe do usuário ser impressa, ela deve sobrecarregar o ostream& operador <<.
  * 
  * @param data Dado a ser convertido
- * @param cfmt Parâmetro de formatação no modo printf
+ * @param cfmt (opcional) Parâmetro de formatação no modo printf
  * @return String com o dado convertido
  * 
  * @warning tostr(std::list<int>{1,2,3}, "%02d") | WRITE();
@@ -249,9 +284,6 @@ std::string tostr(PRINTABLE data, std::string cfmt)
 [](load)[](tests/tostr.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
-#include <memory>
-#include <optional>
 #include "fn.hpp"
 using namespace fn;
 int main() {
@@ -335,9 +367,9 @@ int main() {
  * Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
  * Não primitivos são formatados de acordo com a função TOSTR
  * 
- * @param std::string fmt: O texto com os {} para substituir pelos argumentos
- * @param Args ...args: Os argumentos a serem substituídos
- * @return std::string: O texto formatado
+ * @param fmt O texto com os {} para substituir pelos argumentos
+ * @param Args Os argumentos a serem substituídos
+ * @return O texto formatado
  * 
  * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
  * @note https://github.com/senapk/cppaux#format
@@ -418,7 +450,6 @@ std::string join(CONTAINER container, std::string separator = "", std::string br
 [](load)[](tests/join.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 
@@ -471,7 +502,6 @@ inline std::vector<int> range(int init, int end, int step = 1)
 [](load)[](tests/range.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 
@@ -522,10 +552,11 @@ int main() {
 ```cpp
 /**
  * Fatia um container de begin até o fim retornando um vector com os elementos copiados.
- * O funcionamento é equivalente à função slice do Python ou do Javascript.
+ * O funcionamento é equivalente à função slice do Python ou do Javascript. Se não passado
+ * nenhum parâmetro, copia todos os elementos.
  * 
  * @param container Container a ser fatiado
- * @param begin Índice inicial
+ * @param begin (opcional) Índice inicial
  * @return Vector com os elementos copiados
  * 
  * @warning std::vector<int>{1, 2, 3, 4, 5} | SLICE(1)  | WRITE(); // [2, 3, 4, 5]
@@ -541,7 +572,6 @@ auto slice(CONTAINER container, int begin = 0)
 [](load)[](tests/slice.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 
@@ -617,7 +647,6 @@ auto filter(CONTAINER container, FUNCTION fn)
 [](load)[](tests/filter.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 struct Pessoa {
@@ -670,7 +699,6 @@ auto map(CONTAINER container, FUNCTION fn)
 [](load)[](tests/map.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 
@@ -707,8 +735,10 @@ int main() {
  * Transforma uma string em um vetor de strings, separando pelo delimitador
  * 
  * @param content String a ser separada
- * @param delimiter Caractere delimitador
+ * @param delimiter (opcional) Caractere delimitador
  * @return Vetor de strings
+ * 
+ * @warning split("a,b,c", ',') | WRITE(); // [a, b, c]
  * 
  * @note https://github.com/senapk/cppaux#split
  */
@@ -761,7 +791,6 @@ std::tuple<TS...> unpack(const std::string& line, char delimiter)
 [](load)[](tests/unpack.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 
@@ -804,7 +833,6 @@ struct PIPE
 [](load)[](tests/pipe.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 int main() {
@@ -842,7 +870,6 @@ int main() {
 [](load)[](tests/fnt.cpp)[](fenced=cpp)
 
 ```cpp
-#include <iostream>
 #include "fn.hpp"
 using namespace fn;
 
@@ -868,7 +895,7 @@ int main() {
 [](load)
 
 ### ZIP
-    
+
 [](load)[](fn.hpp)[](fenced=cpp:extract=zip)
 
 ```cpp
@@ -880,8 +907,8 @@ int main() {
  * @return Vetor de pares
  * 
  * @warning zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
- * @note https://github.com/senapk/cppaux#zip
  * 
+ * @note https://github.com/senapk/cppaux#zip
  */
 template<typename CONTAINER_A, typename CONTAINER_B>
 auto zip(CONTAINER_A A, CONTAINER_B B)
@@ -952,6 +979,9 @@ int main() {
 
     zipwith(range(10), "pterodactilo"s, FNT2(x, y, tostr(x) + y))
         | WRITE(); // [0p, 1t, 2e, 3r, 4o, 5d, 6a, 7c, 8t, 9i]
+
+    range(10) | ZIPWITH(range(10), FNT2(x, y, x + y))
+        | WRITE(); // [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
 }
 ```
 

@@ -1,14 +1,11 @@
 #pragma once
 
-#include <type_traits>
 #include <iostream>
 #include <sstream>
-#include <functional>
-#include <cassert>
 #include <memory>
-#include <cstdarg>
 #include <optional>
 
+#include <array>
 #include <set>
 #include <map>
 #include <vector>
@@ -132,6 +129,18 @@ std::string join(CONTAINER container, std::string separator = "", std::string br
     return __STRAUX().join("", container, separator, brakets);
 }
 
+/**
+ * container | JOIN(separator, brakets)
+ * 
+ * @param container Container a ser transformado em string
+ * @param separator (opcional) Separador entre os elementos
+ * @param brakets   (opcional) Brakets que envolvem a string
+ * @return string com os elementos concatenados
+ * 
+ * @warning join(std::vector<int>{1,2,3}, " ", "{}") | WRITE(); // "{1 2 3}"
+ * 
+ * @note https://github.com/senapk/cppaux#join
+ */
 inline auto JOIN(std::string separator = "", std::string brakets = "") {
     return PIPE([separator, brakets](auto container) {
         return join(container, separator, brakets);
@@ -279,7 +288,7 @@ struct __TOSTR<std::optional<T>> {
  * Para classe do usuário ser impressa, ela deve sobrecarregar o ostream& operador <<.
  * 
  * @param data Dado a ser convertido
- * @param cfmt Parâmetro de formatação no modo printf
+ * @param cfmt (opcional) Parâmetro de formatação no modo printf
  * @return String com o dado convertido
  * 
  * @warning tostr(std::list<int>{1,2,3}, "%02d") | WRITE();
@@ -293,45 +302,21 @@ std::string tostr(PRINTABLE data, std::string cfmt)
     return __TOSTR<PRINTABLE>().apply(data, cfmt);
 }
 
+
+/**
+ * DATA | TOSTR(cfmt)
+ * 
+ * @param data Dado a ser convertido
+ * @param cfmt (opcional) Parâmetro de formatação no modo printf
+ * @return String com o dado convertido
+ * 
+ * @warning tostr(std::list<int>{1,2,3}, "%02d") | WRITE();
+ * 
+ * @note https://github.com/senapk/cppaux#tostr
+ */
 inline auto TOSTR(std::string cfmt = "") {
     return PIPE([cfmt](auto data) {
         return tostr(data, cfmt);
-    });
-};
-
-//-------------------------------------------------
-
-//[[verify]]
-/**
- * Verifica se o dado recebido é igual ao esperado.
- * Se não for, imprime o dado recebido e o esperado e encerra o programa.
- * Ambos os dados devem ser do mesmo tipo e são convertidos para string usando o tostr.
- * 
- * @param received Dado recebido
- * @param expected Dado esperado
- * @return Dado recebido
- * 
- * @note https://github.com/senapk/cppaux#verify
- * 
-*/
-template <typename PRINTABLE>
-PRINTABLE verify(PRINTABLE received, PRINTABLE expected, std::string label = "")
-//[[verify]]
-{
-    if (received != expected) {
-        std::cout << "\n----------label------------\n" << label 
-                    << "\n---------received----------\n" << tostr(received) 
-                    << "\n---------expected----------\n" << tostr(expected) 
-                    << "\n---------------------------\n";
-        exit(1);
-    }
-    return received;
-};
-
-template <typename PRINTABLE> 
-auto VERIFY(PRINTABLE expected, std::string label = "") {
-    return PIPE([expected, label](PRINTABLE received) {
-        return verify(received, expected, label);
     });
 };
 
@@ -435,10 +420,11 @@ public:
 //[[slice]]
 /**
  * Fatia um container de begin até o fim retornando um vector com os elementos copiados.
- * O funcionamento é equivalente à função slice do Python ou do Javascript.
+ * O funcionamento é equivalente à função slice do Python ou do Javascript. Se não passado
+ * nenhum parâmetro, copia todos os elementos.
  * 
  * @param container Container a ser fatiado
- * @param begin Índice inicial
+ * @param begin (opcional) Índice inicial
  * @return Vector com os elementos copiados
  * 
  * @warning std::vector<int>{1, 2, 3, 4, 5} | SLICE(1)  | WRITE(); // [2, 3, 4, 5]
@@ -453,8 +439,17 @@ auto slice(CONTAINER container, int begin = 0)
 }
 
 
-// std::vector<int>{1, 2, 3, 4, 5} | SLICE(1)  | WRITE(); // [2, 3, 4, 5]
-// std::vector<int>{1, 2, 3, 4, 5} | SLICE(-2) | WRITE(); // [4, 5]
+/**
+ * container | SLICE(begin)
+ * 
+ * @param container Container a ser fatiado
+ * @param begin (opcional) Índice inicial
+ * @return Vector com os elementos copiados
+ * 
+ * @warning std::vector<int>{1, 2, 3, 4, 5} | SLICE(1)  | WRITE(); // [2, 3, 4, 5]
+ * 
+ * @note https://github.com/senapk/cppaux#slice
+*/
 inline auto SLICE(int begin = 0)
 {
     return PIPE([begin](auto container) {
@@ -462,16 +457,38 @@ inline auto SLICE(int begin = 0)
     });
 };
 
-// slice(std::vector<int>{1, 2, 3, 4, 5}, 1, -1)  | WRITE(); // [2, 3, 4]
-// slice(std::vector<int>{1, 2, 3, 4, 5}, -3, -1) | WRITE(); // [3, 4]
+/**
+ * Fatia um container de begin até o fim retornando um vector com os elementos copiados.
+ * O funcionamento é equivalente à função slice do Python ou do Javascript. Se não passado
+ * nenhum parâmetro, copia todos os elementos.
+ * 
+ * @param container Container a ser fatiado
+ * @param begin Índice inicial
+ * @param end Índice final
+ * @return Vector com os elementos copiados
+ * 
+ * @warning std::vector<int>{1, 2, 3, 4, 5} | SLICE(1, -1)  | WRITE(); // [2, 3, 4]
+ * 
+ * @note https://github.com/senapk/cppaux#slice
+*/
 template<typename CONTAINER>
 auto slice(CONTAINER container, int begin, int end)
 {
     return __SLICE(begin, end)(container);
 }
 
-// std::vector<int>{1, 2, 3, 4, 5} | SLICE(1, -1)  | WRITE(); // [2, 3, 4]
-// std::vector<int>{1, 2, 3, 4, 5} | SLICE(-3, -1) | WRITE(); // [3, 4]
+/**
+ * container | SLICE(begin, end)
+ * 
+ * @param container Container a ser fatiado
+ * @param begin Índice inicial
+ * @param end Índice final
+ * @return Vector com os elementos copiados
+ * 
+ * @warning std::vector<int>{1, 2, 3, 4, 5} | SLICE(1, -1)  | WRITE(); // [2, 3, 4]
+ * 
+ * @note https://github.com/senapk/cppaux#slice
+*/
 inline auto SLICE(int begin, int end)
 {
     return PIPE([begin, end](auto container) {
@@ -495,13 +512,22 @@ auto map(CONTAINER container, FUNCTION fn)
 //[[map]]
 {
     std::vector<decltype(fn(*container.begin()))> aux;
-    std::transform(container.begin(), container.end(), std::back_inserter(aux), fn);
+    //std::transform(container.begin(), container.end(), std::back_inserter(aux), fn);
+    for (auto& item : container) {
+        aux.push_back(fn(item));
+    }
     return aux;
 }
 
-// std::vector<int>{1, 2, 3, 4, 5} | MAP([](auto x) {return x * 2;}) | WRITE(); // [2, 4, 6, 8, 10]
-// std::vector<int>{1, 2, 3, 4, 5} | MAP(FNT(x, x/2.0)) | WRITE(); // [0.5, 1, 1.5, 2, 2.5]
-// range(26) | MAP(FNT(x, (char) (x + 'a'))) | JOIN() | WRITE(); // abcdefghijklmnopqrstuvwxyz
+/**
+ * container | MAP(fn)
+ * 
+ * @param container Container a ser mapeado
+ * @param fn Função a ser aplicada em cada elemento do container
+ * @return Vector com os elementos resultantes da aplicação da função
+ * 
+ * @note https://github.com/senapk/cppaux#map
+ */
 template <typename FUNCTION>
 auto MAP(FUNCTION fn) {
     return PIPE([fn](auto container) {
@@ -532,8 +558,15 @@ auto filter(CONTAINER container, FUNCTION fn)
     return aux;
 }
 
-// std::vector<int>{1, 2, 3, 4, 5} | FILTER([](auto x) {return x % 2 == 0;}) | WRITE(); // [2, 4]
-// std::vector<int>{1, 2, 3, 4, 5} | FILTER(FNT(x, x % 2 == 1)) | WRITE(); // [1, 3, 5]
+/**
+ * container | FILTER(fn)
+ * 
+ * @param container Container a ser filtrado
+ * @param fn Função predicado
+ * @return Vector com os elementos que satisfazem a função predicado
+ * 
+ * @note https://github.com/senapk/cppaux#filter
+ */
 template <typename FUNCTION>
 auto FILTER(FUNCTION fn)
 {
@@ -554,7 +587,7 @@ auto FILTER(FUNCTION fn)
  * @return Valor convertido
  * @throws std::runtime_error Caso a conversão não seja possível
  * 
- * @note https://github.com/senapk/cppaux#filter
+ * @note https://github.com/senapk/cppaux#strto
  * 
 */
 template <typename READABLE>
@@ -569,8 +602,17 @@ READABLE strto(std::string value)
     throw std::runtime_error("strto: invalid conversion from " + value);
 }
 
-// int x = "123"s | STRTO<int>(); // 123
-// double y = "3.14"s | STRTO<double>(); // 3.14
+/**
+ * value | STRTO<READABLE>()
+ * 
+ * @param value String a ser convertida
+ * @tparam READABLE Tipo a ser convertido
+ * @return Valor convertido
+ * @throws std::runtime_error Caso a conversão não seja possível
+ * 
+ * @note https://github.com/senapk/cppaux#strto
+ * 
+*/
 template <typename READABLE>
 auto STRTO() {
     return PIPE([](std::string value) {
@@ -597,7 +639,16 @@ inline double number(std::string value)
     return strto<double>(value);
 }
 
-// double x {"3.14"s | NUMBER()};
+/**
+ * value | NUMBER()
+ * 
+ * @param value String a ser convertida
+ * @return Valor convertido para double
+ * @throws std::runtime_error Caso a conversão não seja possível
+ * 
+ * @note https://github.com/senapk/cppaux#number
+ * 
+*/
 inline auto NUMBER() {
     return PIPE([](std::string value) {
         return number(value);
@@ -651,7 +702,19 @@ std::tuple<TS...> unpack(const std::string& line, char delimiter)
 }
 
 
-// "1:2.4:uva"s | UNPACK<int, double, std::string>(':') | WRITE(); // (1, 2.4, "uva")
+/**
+ * value | UNPACK<TS...>(delimiter)
+ * 
+ * @tparam TS... Tipos a serem extraídos
+ * @param value String a ser convertida
+ * @param delimiter Caractere separador entre os elementos
+ * @return Tupla com os elementos convertidos
+ * 
+ * @warning "1:2.4:uva" | UNPACK<int, double, std::string>(':') | WRITE(); // (1, 2.4, "uva")
+ * 
+ * @note https://github.com/senapk/cppaux#unpack
+ * 
+ */
 template <typename... TS>
 auto UNPACK(char delimiter) {
     return PIPE([delimiter](std::string line) {
@@ -670,8 +733,8 @@ auto UNPACK(char delimiter) {
  * @return Vetor de pares
  * 
  * @warning zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
- * @note https://github.com/senapk/cppaux#zip
  * 
+ * @note https://github.com/senapk/cppaux#zip
  */
 template<typename CONTAINER_A, typename CONTAINER_B>
 auto zip(CONTAINER_A A, CONTAINER_B B)
@@ -691,8 +754,19 @@ auto zip(CONTAINER_A A, CONTAINER_B B)
     }
     return aux;
 };
-// Une dois containers em um único container de pares limitado ao menor tamanho dos dois containers
-// vector<int>{1, 2, 3} | ZIP(string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
+
+/**
+ * container_a | ZIP(container_b)
+ * 
+ * @param container_a primeiro container
+ * @param container_b segundo container
+ * @return Vetor de pares
+ * 
+ * @warning vector<int>{1, 2, 3} | ZIP(string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
+ * 
+ * @note https://github.com/senapk/cppaux#zip
+ * 
+ */
 template<typename CONTAINER_B>
 auto ZIP(CONTAINER_B B) {
     return PIPE([B](auto A) {
@@ -733,10 +807,18 @@ auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin)
     return aux;
 };
 
-// Une dois containers em um único container de pares limitado ao menor tamanho dos dois containers
-// colocando o resultado da função fnjoin em cada par no container de saída
-// Exemplo:
-// range(10) | ZIPWITH("pterodactilo"s, FNT2(x, y, tostr(x) + y)) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]
+/**
+ * container_a | ZIPWITH(container_b, fnjoin)
+ * 
+ * @param container_a primeiro container
+ * @param container_b segundo container
+ * @return Vetor com os resultados
+ * 
+ * @warning range(10) | ZIPWITH("pterodactilo"s, FNT2(x, y, tostr(x) + y)) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]
+ * 
+ * @note https://github.com/senapk/cppaux#zipwith
+ * 
+ */
 template<typename CONTAINER_B, typename FNJOIN>
 auto ZIPWITH(CONTAINER_B B, FNJOIN fnjoin) {
     return PIPE([B, fnjoin](auto A) {
@@ -825,9 +907,9 @@ public:
  * Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
  * Não primitivos são formatados de acordo com a função TOSTR
  * 
- * @param std::string fmt: O texto com os {} para substituir pelos argumentos
- * @param Args ...args: Os argumentos a serem substituídos
- * @return std::string: O texto formatado
+ * @param fmt O texto com os {} para substituir pelos argumentos
+ * @param Args Os argumentos a serem substituídos
+ * @return O texto formatado
  * 
  * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
  * @note https://github.com/senapk/cppaux#format
@@ -840,6 +922,17 @@ std::string format(std::string fmt, Args ...args)
     return __FORMAT<Args...>(args...)(fmt);
 }
 
+/**
+ * texto | FORMAT(arg1, arg2, ...)
+ * 
+ * @param fmt O texto com os {} para substituir pelos argumentos
+ * @param Args Os argumentos a serem substituídos
+ * @return O texto formatado
+ * 
+ * @warning "O {} é {0.2f} e o {} é {0.2f}" | FORMAT("pi", 3.141592653, "e", 2.7182818);
+ * 
+ * @note https://github.com/senapk/cppaux#format
+ */
 template<typename... Args>
 auto FORMAT(Args ...args) {
     return PIPE([args...](std::string fmt) {
@@ -881,12 +974,14 @@ inline std::vector<int> range(int init, int end, int step = 1)
 }
 
 /**
- * @brief Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step
+ * inicio | RANGE(end, step)
  * 
  * @param init início
  * @param end limite superior
  * @param step passo do incremento
  * @return vetor de inteiros
+ * 
+ * @warning 0 | RANGE(10, 2) | WRITE(); // [0, 2, 4, 6, 8]
  * 
  * @note https://github.com/senapk/cppaux#range
 */
@@ -903,6 +998,8 @@ inline auto RANGE(int end, int step = 1) {
  * @param step passo do incremento
  * @return vetor de inteiros
  * 
+ * @warning range(10) | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+ * 
  * @note https://github.com/senapk/cppaux#range
 */
 inline std::vector<int> range(int end) {
@@ -915,6 +1012,8 @@ inline std::vector<int> range(int end) {
  * @param end limite superior
  * @param step passo do incremento
  * @return vetor de inteiros
+ * 
+ * @warning 10 | RANGE() | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
  * 
  * @note https://github.com/senapk/cppaux#range
 */
@@ -931,10 +1030,10 @@ inline auto RANGE() {
  * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
  * 
  * @param data Dado a ser transformado em string
- * @param end String de quebra de linha
+ * @param end (opcional) String de finalização
  * @return Dado original
  * 
- * @warning std::vector<int> {1, 2, 3} | WRITE();
+ * @warning write(std::vector<int> {1, 2, 3}); // [1, 2, 3]
  * 
  * @note https://github.com/senapk/cppaux#write
  */
@@ -947,11 +1046,13 @@ PRINTABLE write(PRINTABLE data, std::string end = "\n")
 }
 
 /**
- * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
+ * data | WRITE(end)
  * 
  * @param data Dado a ser transformado em string
- * @param end String de quebra de linha
+ * @param end (opcional) String de finalização
  * @return Dado original
+ * 
+ * @warning std::vector<int> {1, 2, 3} | WRITE(); // [1, 2, 3]
  * 
  * @note https://github.com/senapk/cppaux#write
  */
@@ -968,8 +1069,10 @@ inline auto WRITE(std::string end = "\n") {
  * Transforma uma string em um vetor de strings, separando pelo delimitador
  * 
  * @param content String a ser separada
- * @param delimiter Caractere delimitador
+ * @param delimiter (opcional) Caractere delimitador
  * @return Vetor de strings
+ * 
+ * @warning split("a,b,c", ',') | WRITE(); // [a, b, c]
  * 
  * @note https://github.com/senapk/cppaux#split
  */
@@ -984,37 +1087,57 @@ inline std::vector<std::string> split(std::string content, char delimiter = ' ')
     return aux;
 }
 
-// Transforma uma string em um vetor de strings, separando pelo delimitador
-// Retorna o vetor de strings
-// Exemplo:
-// "a,b,c" | SPLIT(',') | WRITE(); // [a, b, c]
-// "eu gosto de comer banana" | SPLIT(' ') | WRITE(); // [eu, gosto, de, comer, banana]")
-// "eu gosto de comer    banana", ' ') | SPLIT() | WRITE(); // [eu, gosto, de, comer, , , , banana]")
+/**
+ * content | SPLIT(delimiter)
+ * 
+ * @param content String a ser separada
+ * @param delimiter (opcional) Caractere delimitador
+ * @return Vetor de strings
+ * 
+ * @warning "a,b,c" | SPLIT(',') | WRITE(); // [a, b, c]
+ * 
+ * @note https://github.com/senapk/cppaux#split
+ */
 inline auto SPLIT(char delimiter = ' ') {
     return PIPE([delimiter](std::string content) {
         return split(content, delimiter);
     });
 };
 
-
-//-------------------------------------------------
-// Extrai uma linha e retorna como string
-// O padrão é o std::cin, mas pode ser um fluxo ou arquivo
-// Se não houver mais linhas, lança uma exceção
-// Exemplo:
-// auto line = input(); // lê uma linha do std::cin
-inline std::string input(std::istream & is = std::cin) {
+//[[input]]
+/**
+ * Extrai uma linha inteira e retorna como string
+ * O padrão é o std::cin, mas pode ser um fluxo ou arquivo
+ * Se não houver mais linhas, lança uma exceção
+ * 
+ * @param source (opcional) de onde ler a linha
+ * @return linha lida
+ * 
+ * @warning auto line = input();
+ * 
+ * @note https://github.com/senapk/cppaux#input
+ */
+inline std::string input(std::istream & is = std::cin)
+//[[input]]
+{
     std::string line;
     if (std::getline(is, line))
         return line;
     throw std::runtime_error("input empty");
 }
 
-// Extrai uma linha e retorna como string
-// O padrão é o std::cin, mas pode ser um fluxo ou arquivo
-// Se não houver mais linhas, lança uma exceção
-// Exemplo:
-// auto line = std::cin | INPUT(); // lê uma linha do std::cin
+/**
+ * Extrai uma linha inteira e retorna como string
+ * O padrão é o std::cin, mas pode ser um fluxo ou arquivo
+ * Se não houver mais linhas, lança uma exceção
+ * 
+ * @param source (opcional) de onde ler a linha
+ * @return linha lida
+ * 
+ * @warning auto line = std::cin | INPUT(); // lê uma linha do std::cin
+ * 
+ * @note https://github.com/senapk/cppaux#input
+ */
 struct INPUT {
     friend std::string operator|(std::istream& is, INPUT) {
         return input(is);
