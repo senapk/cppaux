@@ -74,6 +74,7 @@
         "complex": "cpp",
         "bitset": "cpp",
         "typeindex": "cpp",
-        "forward_list": "cpp"
+        "forward_list": "cpp",
+        "charconv": "cpp"
     }
 }

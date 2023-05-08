@@ -4,7 +4,8 @@
 #include <sstream>
 #include <memory>
 #include <optional>
-
+#include <charconv>
+#include <iomanip>
 #include <array>
 #include <set>
 #include <map>
@@ -51,21 +52,153 @@ struct PIPE
 };
 
 //-------------------------------------------------
-template<typename PRINTABLE>
-std::string tostr(PRINTABLE data, std::string cfmt = ""); 
 
-struct __STRAUX {
-    template <typename ...Args>
-    static std::string cformat(const std::string& format, Args && ...args) 
-    {
-        auto size = std::snprintf(nullptr, 0, format.c_str(), std::forward<Args>(args)...);
+class CFMT {
+    template <typename T>
+    static std::string transform(const T& data, const std::string& format) {
+        std::string fmt = format;
+        if (fmt.front() != '%')
+            fmt = "%" + fmt;
+        auto size = std::snprintf(nullptr, 0, fmt.c_str(), data);
         std::string output(size + 1, '\0');
-        std::sprintf(&output[0], format.c_str(), std::forward<Args>(args)...);
+        std::sprintf(&output[0], fmt.c_str(), data);
         if (output.back() == '\0') 
             output.pop_back();
         return output;
     }
 
+    template <typename T>
+    static std::string basic_transform(const T& data) {
+        std::stringstream ss;
+        ss << data;
+        return ss.str();
+    }
+
+
+    template <typename T>
+    static std::string validate(const T& data, const std::string& format) 
+    {
+        if (format == "%s" || format == "" || format == "s") {
+            return basic_transform(data);
+        }
+
+        if (format.size() > 0 && format.back() == 's') {//formatting a non string with %s
+            return validate(basic_transform(data), format);
+        }
+        return transform(data, format);
+    }
+
+    static std::string validate(const std::string& data, const std::string& format) 
+    {
+        return validate(data.c_str(), format);
+    }
+
+    //write specialization for const char *
+    static std::string validate(const char* const& data, const std::string& format) 
+    {
+        if (format == "%s" || format == "" || format == "s") {
+            return data;
+        }
+        std::string new_format = format;
+
+        if (format.size() > 1 && format.back() != 's') {
+            std::cout << "fail: Formatting \"" << data << "\" with non string format \"" << format << "\".\n";
+            exit(1);
+        }
+        return CFMT::transform(data, format);
+    };
+
+
+    //search for target, if exists, try to get a integer after the target
+    //return if target is found, the integer and the rest of the string without the target and the integer
+    static std::tuple<bool, int, std::string> extract_align(const char& target, std::string& format) {
+        auto pos = format.find(target);
+        if (pos != std::string::npos) {
+            if (pos + 1 < format.size()) {
+                int align = 0;
+                auto [ptr, ec] = std::from_chars(format.data() + pos + 1, format.data() + format.size(), align);
+                if (ec == std::errc()) {
+                    format.erase(pos, ptr - format.data() - pos);
+                    return { true, align, format };
+                }
+            }
+            std::cout << "fail: format `" << format << "`, symbol `" << target << "` must be followed by a integer\n";
+            exit(1); 
+        }
+        return { false, 0, format };
+    }
+
+    static std::string align_text(char align, int width, char pad, const std::string& str) {
+        int len = str.length();
+        if(width < len) { 
+            return str; 
+        }
+        int diff = width - len;
+        
+        //default is center
+        int padleft = diff/2;
+        int padright = diff - padleft;
+        if(align == '>') {
+            padleft = diff;
+            padright = 0;
+        }
+        else if(align == '<') {
+            padleft = 0;
+            padright = diff;
+        }
+        return std::string(padleft, pad) + str + std::string(padright, pad);
+    }
+
+public:
+
+    template <typename T>
+    static std::string format(const T& data, const std::string& format = "%s") 
+    {
+        std::string fmt = format;
+
+        bool res = false;
+        int size = -1;
+        char align = '<';
+        //checking for alignment and size
+        std::tie(res, size, fmt) = extract_align('<', fmt);
+        if (!res) {
+            align = '>';
+            std::tie(res, size, fmt) = extract_align('>', fmt);
+        }
+        if (!res) {
+            align = '^';
+            std::tie(res, size, fmt) = extract_align('^', fmt);
+        }
+
+        char pad = ' ';
+        //search for : char in format, if exists and is followed by a char, then use that char as padding, and remove both from string
+        auto pos = fmt.find(':');
+        if (pos != std::string::npos) {
+            if (pos + 1 < fmt.size()) {
+                pad = fmt[pos + 1];
+                fmt.erase(pos, 2);
+            } else {
+                std::cout << "fail: format symbol `:` must be followed by a padding char\n";
+                exit(1);
+            }
+        }
+
+
+        //align
+        std::string anwser = validate(data, fmt);
+        if (size == -1)
+            return anwser;
+        return align_text(align, size, pad, anwser);
+    }
+
+};
+
+//-------------------------------------------------
+
+template<typename PRINTABLE>
+std::string tostr(PRINTABLE data, std::string cfmt = ""); 
+
+struct __STRAUX {
     static std::string embrace(std::string data, std::string brackets) 
     {
         auto prefix = brackets.size() > 0 ? std::string {brackets[0]} : "";
@@ -157,7 +290,7 @@ struct __TOSTR{
             ss << data;
             return ss.str();
         } else {
-            return __STRAUX::cformat(fmt, data);
+            return CFMT::format(data, fmt);
         }
     }
 };
@@ -178,7 +311,7 @@ struct __TOSTR<std::string> {
         if (fmt.size() > 0) {
             static std::string dummy;
             dummy = v;
-            return __STRAUX::cformat(fmt, v.c_str());
+            return CFMT::format(v.c_str(), fmt);
         }
         return v;
     }
@@ -942,6 +1075,49 @@ auto FORMAT(Args ...args) {
 
 //-------------------------------------------------
 
+//[[print]]
+/**
+ * Invoca a função format e imprime o resultado na tela
+ * 
+ * @param fmt O texto com os {} para substituir pelos argumentos
+ * @param Args Os argumentos a serem substituídos
+ * @return O texto formatado
+ * 
+ * @warning print("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @note https://github.com/senapk/cppaux#print
+ * 
+ */
+template<typename... Args>
+std::string print(std::string fmt, Args ...args)
+//[[format]]
+{
+    auto result = __FORMAT<Args...>(args...)(fmt);
+    std::cout << result;
+    return result;
+}
+
+/**
+ * texto | PRINT(arg1, arg2, ...)
+ * 
+ * @param fmt O texto com os {} para substituir pelos argumentos
+ * @param Args Os argumentos a serem substituídos
+ * @return O texto formatado
+ * 
+ * @warning "O {} é {0.2f} e o {} é {0.2f}" | PRINT("pi", 3.141592653, "e", 2.7182818);
+ * 
+ * @note https://github.com/senapk/cppaux#print
+ */
+template<typename... Args>
+auto PRINT(Args ...args) {
+    return PIPE([args...](std::string fmt) {
+        auto result = __FORMAT<Args...>(args...)(fmt);
+        std::cout << result;
+        return result;
+    });
+};
+
+//-------------------------------------------------
+
 // [[range]]
 /**
  * @brief Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step.
@@ -1061,6 +1237,8 @@ inline auto WRITE(std::string end = "\n") {
         return write(data, end);
     });
 }
+
+
 
 //-------------------------------------------------
 
