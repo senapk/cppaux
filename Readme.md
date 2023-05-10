@@ -10,6 +10,7 @@
   - [WRITE](#write)
   - [TOSTR](#tostr)
   - [FORMAT](#format)
+  - [PRINT](#print)
   - [JOIN](#join)
   - [RANGE](#range)
   - [SLICE](#slice)
@@ -21,6 +22,7 @@
   - [FNT](#fnt)
   - [ZIP](#zip)
   - [ZIPWITH](#zipwith)
+  - [ENUMERATE](#enumerate)
 [](toc)
 
 ## Duas opções de funções
@@ -292,15 +294,15 @@ int main() {
     tostr(5.6123, "%.2f")                     | WRITE(); // 5.61
     tostr(std::vector<int> {1, 2, 3})         | WRITE(); // [1, 2, 3]
     tostr(std::pair<int, int> {1, 2}, "%03d") | WRITE(); // (001, 002)
-    tostr("banana", "<%-8s>")                 | WRITE(); // <banana  >
+    tostr("banana", "%-8s")                   | WRITE(); // banana  
 
     // números
     5.6123 | TOSTR("%.2f")     | WRITE(); // 5.61
     5      | TOSTR("%02d")     | WRITE(); // 05
 
     // alinhamento de string
-    "banana"  | TOSTR(".%-8s.")  | WRITE(); // .banana  .
-    "banana"  | TOSTR(".%8s.")   | WRITE(); // .  banana.
+    "banana"  | TOSTR("%-8s")  | WRITE(); // banana  
+    "banana"  | TOSTR("%8s")   | WRITE(); //   banana
 
     // containers
     // a função write já chama a função tostr para não primitivos
@@ -420,6 +422,45 @@ int main() {
 
 [](load)
 
+### PRINT
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=print)
+
+```cpp
+/**
+ * Invoca a função format e imprime o resultado na tela
+ * 
+ * @param fmt O texto com os {} para substituir pelos argumentos
+ * @param Args Os argumentos a serem substituídos
+ * @return O texto formatado
+ * 
+ * @warning print("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @note https://github.com/senapk/cppaux#print
+ * 
+ */
+template<typename... Args>
+std::string print(std::string fmt, Args ...args)
+```
+
+[](load)
+
+[](load)[](tests/print.cpp)[](fenced=cpp)
+
+```cpp
+#include <fn.hpp>
+
+
+int main() {
+
+    fn::print("{:_<10}\n", "left");
+    fn::print("{:=^10}\n", "centro");
+    fn::print("{>10}\n", "rigth");
+}
+
+```
+
+[](load)
+
 ### JOIN
 
 [](load)[](fn.hpp)[](fenced=cpp:extract=join)
@@ -465,13 +506,12 @@ int main() {
     "abced"s | JOIN(", ") | WRITE(); // a, b, c, e, d
 
     std::make_tuple("ovo", 1, 1.3) 
-        | JOIN(", ", "<>")
-        | WRITE(); // <ovo, 1, 1.3>
+        | JOIN(", ")
+        | WRITE(); // ovo, 1, 1.3
 
     std::make_pair("ovo", 1)
         | JOIN(":")
-        | TOSTR("<%s>")
-        | WRITE(); // <ovo:1>
+        | WRITE(); // ovo:1
 }
 ```
 
@@ -982,6 +1022,54 @@ int main() {
 
     range(10) | ZIPWITH(range(10), FNT2(x, y, x + y))
         | WRITE(); // [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+}
+```
+
+[](load)
+
+### ENUMERATE
+
+[](load)[](fn.hpp)[](fenced=cpp:extract=enumerate)
+
+```cpp
+/**
+ * Retorna um vetor de pares com os indices seguidos dos elementos originais do vetor
+ * 
+ * @param container Container a ser enumerado
+ * @return Vector com os pares
+ * 
+ * @note https://github.com/senapk/cppaux#enumerate
+ */
+template<typename CONTAINER>
+auto enumerate(CONTAINER container)
+```
+
+[](load)
+
+[](load)[](tests/enumerate.cpp)[](fenced=cpp)
+
+```cpp
+#include "fn.hpp"
+
+
+int main() {
+
+    std::vector<int> a {1, 3, 2, 5};
+
+    fn::write(fn::enumerate(a));  // [(0, 1), (1, 3), (2, 2), (3, 5)]
+
+    fn::write(fn::enumerate("banana"s)); // [(0, b), (1, a), (2, n), (3, a), (4, n), (5, a)]
+
+    std::vector<double> d = {1.2, 2.1, 5.3, 6.7, 9.34};
+    d | fn::ENUMERATE() | fn::MAP(FNT(p, fn::format("{:_^5}:{%.2f}", std::get<0>(p), std::get<1>(p)))) | fn::JOIN("\n") | fn::WRITE();
+
+    /*
+__0__:1.20
+__1__:2.10
+__2__:5.30
+__3__:6.70
+__4__:9.34
+    */
 }
 ```
 

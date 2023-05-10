@@ -668,6 +668,47 @@ auto MAP(FUNCTION fn) {
     });
 };
 
+// -------------------------------------------------
+//[[enumerate]]
+/**
+ * Retorna um vetor de pares com os indices seguidos dos elementos originais do vetor
+ * 
+ * @param container Container a ser enumerado
+ * @return Vector com os pares
+ * 
+ * @note https://github.com/senapk/cppaux#enumerate
+ */
+template<typename CONTAINER>
+auto enumerate(CONTAINER container)
+//[[enumerate]]
+{
+    auto fn = [](auto x) {return x;}; 
+    std::vector<std::pair<int, decltype(fn(*container.begin()))>> aux;
+    int i = 0;
+    for (auto& item : container) {
+        aux.push_back(std::make_pair(i, item));
+        i++;
+    }
+    return aux;
+}
+
+// -------------------------------------------------
+/**
+ * container | ENUMERATE()
+ * Retorna um vetor de pares com os indices seguidos dos elementos originais do vetor
+ * 
+ * @param container Container a ser enumerado
+ * @return Vector com os pares
+ * 
+ * @note https://github.com/senapk/cppaux#enumerate
+ */
+
+auto ENUMERATE() {
+    return PIPE([](auto container) {
+        return enumerate(container);
+    });
+};
+
 //-------------------------------------------------
 
 //[[filter]]
@@ -1089,7 +1130,7 @@ auto FORMAT(Args ...args) {
  */
 template<typename... Args>
 std::string print(std::string fmt, Args ...args)
-//[[format]]
+//[[print]]
 {
     auto result = __FORMAT<Args...>(args...)(fmt);
     std::cout << result;
