@@ -1,0 +1,30 @@
+>>>>>>>>
+========
+O valores sao 5 e 7.
+O primeiro elemento de [1, 2, 3] eh 1.
+bananada
+{ Dobre para poder inserir chaves. }
+Formate com printf assim 5.61 ou assim 6.32.
+Ou completando com zeros 05
+Hora 05:06:07
+Usando <10 para alinhar [banana    ].
+Usando >10 para alinhar [    banana]
+Usando ^10 para alinhar [  banana  ]
+:[char] muda o char de pad banana____.
+:[char] muda o char de pad ====banana.
+:[char] muda o char de pad **banana**.
+vector [1, 2, 3]
+list [1, 2, 3]
+array [1, 2, 3]
+pair (1, 2)
+tuple (1, 2, 3)
+pair (1.7, (ovo, 3))
+[1.70, 2.30, 3.40]
+([_01_, _02_, _03_], [_04_, _05_, _06_])
+map {(1, 2), (3, 4)}
+map {(ave, 2), (casa, 1)}
+set {1, 2, 3}
+Verdade eh true e mentira eh false
+lista de bools [true, false, true]
+vector de bools [1, 0, 1]
+<<<<<<<<

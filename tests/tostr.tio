@@ -23,8 +23,6 @@ banana
 {1, 2, 3}
 {3, 2, 1}
 {a, c}
-[1, 2, null]
-[1, 2, null]
 true
 false
 (true, 5.43)

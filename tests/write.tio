@@ -6,8 +6,7 @@
 [1.5, 2.5, 3.5]
 (ovo, queijo)
 (1, 2.3, tres)
-5 eh cinco
-5 nao eh seis
+sem quebrar linha ou mudando a quebra de linha.
 [Joao:5, Maria:6]
-Joao:5
+A pessoa eh Joao:5.
 <<<<<<<<

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -214,17 +212,6 @@ struct __STRAUX {
         return __STRAUX::embrace(output, brackets);
     }
 
-    template <typename... Ts>
-    static std::string join(std::string fmt, std::tuple<Ts...> const &theTuple, std::string separator = ", ", std::string brackets = "()")
-    {
-        std::stringstream ss;
-        std::apply( [&](Ts const &...tupleArgs) {
-                std::size_t n{0};
-                ((ss << tostr(tupleArgs, fmt) << (++n != sizeof...(Ts) ? separator : "")), ...);
-            }, theTuple);
-        return __STRAUX::embrace(ss.str(), brackets);
-    }
-
     template<typename A, typename B>
     static std::string join(std::string fmt, std::pair<A, B> pair, std::string separator = ", ", std::string brackets = "()")
     {
@@ -269,8 +256,10 @@ std::string join(CONTAINER container, std::string separator = "")
  * 
  * @note https://github.com/senapk/cppaux#join
  */
+
+template<typename FUNCTION> 
 inline auto JOIN(std::string separator = "") {
-    return PIPE([separator](auto container) {
+    return PIPE<FUNCTION>([separator](auto container) {
         return join(container, separator);
     });
 };
@@ -425,8 +414,9 @@ std::string tostr(PRINTABLE data, std::string cfmt)
  * 
  * @note https://github.com/senapk/cppaux#tostr
  */
+template<typename FN> 
 inline auto TOSTR(std::string cfmt = "") {
-    return PIPE([cfmt](auto data) {
+    return PIPE<FN>([cfmt](auto data) {
         return tostr(data, cfmt);
     });
 };
@@ -561,9 +551,10 @@ auto slice(CONTAINER container, int begin = 0)
  * 
  * @note https://github.com/senapk/cppaux#slice
 */
+template <class FN>
 inline auto SLICE(int begin = 0)
 {
-    return PIPE([begin](auto container) {
+    return PIPE<FN>([begin](auto container) {
         return __SLICE(begin)(container);
     });
 };
@@ -600,9 +591,10 @@ auto slice(CONTAINER container, int begin, int end)
  * 
  * @note https://github.com/senapk/cppaux#slice
 */
+template <class FN>
 inline auto SLICE(int begin, int end)
 {
-    return PIPE([begin, end](auto container) {
+    return PIPE<FN>([begin, end](auto container) {
         return __SLICE(begin, end)(container);
     });
 };
@@ -639,9 +631,9 @@ auto map(CONTAINER container, FUNCTION fn)
  * 
  * @note https://github.com/senapk/cppaux#map
  */
-template <typename FUNCTION>
+template <typename FUNCTION, typename FN>
 auto MAP(FUNCTION fn) {
-    return PIPE([fn](auto container) {
+    return PIPE<FN>([fn](auto container) {
         return map(container, fn);
     });
 };
@@ -681,8 +673,9 @@ auto enumerate(CONTAINER container)
  * @note https://github.com/senapk/cppaux#enumerate
  */
 
+template <class FN>
 auto ENUMERATE() {
-    return PIPE([](auto container) {
+    return PIPE<FN>([](auto container) {
         return enumerate(container);
     });
 };
@@ -719,10 +712,10 @@ auto filter(CONTAINER container, FUNCTION fn)
  * 
  * @note https://github.com/senapk/cppaux#filter
  */
-template <typename FUNCTION>
+template <typename FUNCTION, typename FN>
 auto FILTER(FUNCTION fn)
 {
-    return PIPE([fn](auto container) {
+    return PIPE<FN>([fn](auto container) {
         return filter(container, fn);
     });
 };
@@ -765,9 +758,9 @@ READABLE strto(std::string value)
  * @note https://github.com/senapk/cppaux#strto
  * 
 */
-template <typename READABLE>
+template <typename READABLE, typename FN>
 auto STRTO() {
-    return PIPE([](std::string value) {
+    return PIPE<FN>([](std::string value) {
         return strto<READABLE>(value);
     });
 };
@@ -801,76 +794,10 @@ inline double number(std::string value)
  * @note https://github.com/senapk/cppaux#number
  * 
 */
+template <class FN>
 inline auto NUMBER() {
-    return PIPE([](std::string value) {
+    return PIPE<FN>([](std::string value) {
         return number(value);
-    });
-};
-
-//-------------------------------------------------
-template <typename... Types>
-struct __UNPACK {
-    char delimiter;
-    __UNPACK(char delimiter) : delimiter(delimiter) {}
-
-    template<typename Head, typename... Tail>
-    std::tuple<Head, Tail...> tuple_read_impl(std::istream& is, char delimiter) {
-        Head val;
-        std::string token;
-        std::getline(is, token, delimiter);
-        std::stringstream ss_token(token);
-        ss_token >> val;
-        if constexpr (sizeof...(Tail) == 0) // this was the last tuple value
-            return std::tuple{val};
-        else
-            return std::tuple_cat(std::tuple{val}, tuple_read_impl<Tail...>(is, delimiter));
-    }
-
-    std::tuple<Types...> operator()(std::string content) {
-        std::stringstream ss(content);
-        return tuple_read_impl<Types...>(ss, this->delimiter);
-    }
-};
-
-//[[unpack]]
-/**
- * Transforma de string para tupla dados os tipos de cada elemento e o char separador.
- * 
- * @tparam TS... Tipos a serem extraídos
- * @param value String a ser convertida
- * @param delimiter Caractere separador entre os elementos
- * @return Tupla com os elementos convertidos
- * 
- * @warning unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
- * 
- * @note https://github.com/senapk/cppaux#unpack
- * 
- */
-template <typename... TS>
-std::tuple<TS...> unpack(const std::string& line, char delimiter)
-//[[unpack]]
-{
-    return __UNPACK<TS...>(delimiter)(line);
-}
-
-
-/**
- * value | UNPACK<TS...>(delimiter)
- * 
- * @tparam TS... Tipos a serem extraídos
- * @param value String a ser convertida
- * @param delimiter Caractere separador entre os elementos
- * @return Tupla com os elementos convertidos
- * 
- * @warning "1:2.4:uva" | UNPACK<int, double, std::string>(':') | WRITE(); // (1, 2.4, "uva")
- * 
- * @note https://github.com/senapk/cppaux#unpack
- * 
- */
-template <typename... TS>
-auto UNPACK(char delimiter) {
-    return PIPE([delimiter](std::string line) {
-        return __UNPACK<TS...>(delimiter)(line);
     });
 };
 
@@ -919,9 +846,9 @@ auto zip(CONTAINER_A A, CONTAINER_B B)
  * @note https://github.com/senapk/cppaux#zip
  * 
  */
-template<typename CONTAINER_B>
+template<typename CONTAINER_B, typename FN>
 auto ZIP(CONTAINER_B B) {
-    return PIPE([B](auto A) {
+    return PIPE<FN>([B](auto A) {
         return zip(A, B);
     });
 };
@@ -971,9 +898,9 @@ auto zipwith(CONTAINER_A A, CONTAINER_B B, FNJOIN fnjoin)
  * @note https://github.com/senapk/cppaux#zipwith
  * 
  */
-template<typename CONTAINER_B, typename FNJOIN>
+template<typename CONTAINER_B, typename FNJOIN, typename FN>
 auto ZIPWITH(CONTAINER_B B, FNJOIN fnjoin) {
-    return PIPE([B, fnjoin](auto A) {
+    return PIPE<FN>([B, fnjoin](auto A) {
         return zipwith(A, B, fnjoin);
     });
 };
@@ -984,20 +911,6 @@ template<typename... Args>
 class __FORMAT 
 {
     std::tuple<Args...> args;
-
-    std::vector<std::string> tuple_to_vector_str(const std::vector<std::string>& controls)
-    {
-        std::vector<std::string> result;
-        std::apply
-        (
-            [&result, &controls](Args const&... tupleArgs)
-            {
-                int i = -1;
-                ((result.push_back(TOSTR(controls[++i])(tupleArgs))), ...);
-            }, this->args
-        );
-        return result;
-    }
 
     std::pair<std::vector<std::string>, std::vector<std::string>> extract(std::string data)
     {
@@ -1045,7 +958,9 @@ public:
 
     std::string operator()(std::string fmt)
     {
-        auto [texts, controls] = extract(fmt);
+        auto result = extract(fmt);
+        auto texts = result.first;
+        auto controls = result.second;
         auto vars = tuple_to_vector_str(controls);
         while(vars.size() < texts.size())
             vars.push_back("");
@@ -1085,9 +1000,9 @@ std::string format(std::string fmt, Args ...args)
  * 
  * @note https://github.com/senapk/cppaux#format
  */
-template<typename... Args>
+template<typename... Args, typename FN>
 auto FORMAT(Args ...args) {
-    return PIPE([args...](std::string fmt) {
+    return PIPE<FN>([args...](std::string fmt) {
         return __FORMAT<Args...>(args...)(fmt);
     });
 };
@@ -1126,9 +1041,9 @@ std::string print(std::string fmt, Args ...args)
  * 
  * @note https://github.com/senapk/cppaux#print
  */
-template<typename... Args>
+template<typename... Args, typename FN>
 auto PRINT(Args ...args) {
-    return PIPE([args...](std::string fmt) {
+    return PIPE<FN>([args...](std::string fmt) {
         auto result = __FORMAT<Args...>(args...)(fmt);
         std::cout << result;
         return result;
@@ -1180,8 +1095,9 @@ inline std::vector<int> range(int init, int end, int step = 1)
  * 
  * @note https://github.com/senapk/cppaux#range
 */
+template <class FN>
 inline auto RANGE(int end, int step = 1) {
-    return PIPE([end, step](int init) {
+    return PIPE<FN>([end, step](int init) {
         return range(init, end, step);
     });
 };
@@ -1212,8 +1128,9 @@ inline std::vector<int> range(int end) {
  * 
  * @note https://github.com/senapk/cppaux#range
 */
+template <class FN>
 inline auto RANGE() {
-    return PIPE([](int end) {
+    return PIPE<FN>([](int end) {
         return range(0, end, 1);
     });
 };
@@ -1251,8 +1168,9 @@ PRINTABLE write(PRINTABLE data, std::string end = "\n")
  * 
  * @note https://github.com/senapk/cppaux#write
  */
+template <class FN>
 inline auto WRITE(std::string end = "\n") {
-    return PIPE([end](auto data) {
+    return PIPE<FN>([end](auto data) {
         return write(data, end);
     });
 }
@@ -1295,8 +1213,9 @@ inline std::vector<std::string> split(std::string content, char delimiter = ' ')
  * 
  * @note https://github.com/senapk/cppaux#split
  */
+template <class FN>
 inline auto SPLIT(char delimiter = ' ') {
-    return PIPE([delimiter](std::string content) {
+    return PIPE<FN>([delimiter](std::string content) {
         return split(content, delimiter);
     });
 };
@@ -1348,4 +1267,8 @@ using namespace std::string_literals;
 // Transforma uma string em um double utilizando a função STRTO
 inline double operator+(std::string text) {
     return fn::strto<double>(text);
+}
+
+int main() {
+    fn::write("oi");
 }
