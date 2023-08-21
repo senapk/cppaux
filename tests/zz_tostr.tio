@@ -12,7 +12,6 @@ banana
 [1, 2, 3]
 [1, 2, 3]
 (1, 2)
-(1, 5.42, banana)
 ((4, ovo), chiclete)
 (001, 002, 003)
 ([001, 002, 003], [004, 005, 006])
@@ -27,5 +26,5 @@ true
 false
 (true, 5.43)
 [true, false, true]
-[1, 0, 1]
+[true, false, true]
 <<<<<<<<

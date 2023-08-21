@@ -1,7 +1,50 @@
 # FAKEFN for c++
 
-[](toc)
-[](toc)
+<!-- toc -->
+<!-- toc -->
+
+## Requisitos
+
+- Você precisa do GCC 7.3 ou superior para compilar o código.
+- Quando for compilar, utilize a flag `-std=c++17`.
+
+## Instalação no sistema
+
+- Copie o arquivo para uma pasta de bibliotecas do seu sistema e inclua no seu código como `#include <fn.hpp>`.
+  - Windows: Copie a biblioteca para dentro da pasta MinGW\include.
+  - Linux: Copie a biblioteca para dentro da pasta /usr/local/include.
+
+    ```bash
+    sudo curl https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp -o /usr/local/include/fn.hpp
+    ```
+
+```cpp
+//main.cpp
+#include <fn.hpp>
+
+int main() {
+    fn::write("ola mundo");
+}
+
+```
+
+## Usando como arquivo local do projeto
+
+- Copie o arquivo fn.hpp para dentro da pasta do seu projeto e inclua no seu código como `#include "fn.hpp"`.
+
+```bash
+curl https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp -o fn.hpp
+```
+
+```cpp
+//main.cpp
+#include "fn.hpp"
+
+int main() {
+    fn::write("ola mundo");
+}
+
+```
 
 ## Duas opções de funções
 
@@ -20,7 +63,7 @@
     - Modo pipeline: `data | WRITE())`.
 
 [](load)[](guides/duas.cpp)[](fenced=cpp)
-[](load)[](guides/modopipe.cpp)[](fenced=cpp)
+[](load)
 
 ## Resumo das funções
 
@@ -51,7 +94,7 @@ range(init: int, end: int, step = 1) -> [int]  // vetor de [init, end[, não inc
 
 tostr (data: DATA, cfmt = "")                   -> str   // converte qualquer coisa para string e formata
 format(fmt: str, Args ...args)                  -> str   // formata uma string usando {} e printf
-join  (container, separator = "", brakets = "") -> str   // concatena os elementos de um container 
+join  (container, separator = "", cfmt = "") -> str   // concatena os elementos de um container 
 
 //----------------------------------------------------------
 //                  DE STRINGS
@@ -68,7 +111,7 @@ split        (content: str, delimiter = ' ') -> [str]               // dado um d
 filter(container<a>, fn: (a -> bool))      -> [a]       // filtra os elementos que satisfazem a função
 map   (container<a>, fn: (a -> b   ))      -> [b]       // aplica uma função em todos os elementos
 slice (container<a>, begin = 0)            -> [a]       // copia de begin até o final
-slice (container<a>, begin: int, end: int) -> [a]       // copia de begin até end
+slice (container<a>, begin: int, end: int) -> [a]       // copia de [begin, end[
 
 //----------------------------------------------------------
 //             ZIP
@@ -77,12 +120,6 @@ enumerate(container<a>)                -> [(int,a)] // enumera os elementos
 zip    (cont<a>, cont<b>)              -> [(a,b)] // zipa dois containers em um cont de pares
 zipwith(cont<a>, cont<b>, fn: (a,b->c) -> [c]         // zipa dois containers usando uma função
 
-//----------------------------------------------------------
-//                       PIPE 
-//----------------------------------------------------------
-PIPE(FN)         Cria uma functor para ser executado em pipeline
-FNT(x, fn)       Função de transformação simples de um parâmetro
-FNT2(x, y, fxy)  Função de transformação simples de dois parâmetros e uma transformação
 
 ```
 
@@ -192,22 +229,6 @@ Outra função útil para manipulação de strings foi inspirada no operator + d
 [](load)
 
 [](load)[](tests/unpack.cpp)[](fenced=cpp)
-[](load)
-
-### PIPE
-
-[](load)[](fn.hpp)[](fenced=cpp:extract=pipe)
-[](load)
-
-[](load)[](tests/pipe.cpp)[](fenced=cpp)
-[](load)
-
-### FNT
-
-[](load)[](fn.hpp)[](fenced=cpp:extract=fnt)
-[](load)
-
-[](load)[](tests/fnt.cpp)[](fenced=cpp)
 [](load)
 
 ### ZIP

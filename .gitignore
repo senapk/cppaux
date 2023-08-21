@@ -2,3 +2,6 @@
 old
 test_*
 *.cpp
+__*
+.idea
+.vscode

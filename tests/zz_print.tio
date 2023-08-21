@@ -4,7 +4,7 @@ O valores sao 5 e 7.
 O primeiro elemento de [1, 2, 3] eh 1.
 bananada
 { Dobre para poder inserir chaves. }
-Formate com printf assim 5.61 ou assim 6.32.
+Formate com printf assim 5.61.
 Ou completando com zeros 05
 Hora 05:06:07
 Usando <10 para alinhar [banana    ].
@@ -26,5 +26,5 @@ map {(ave, 2), (casa, 1)}
 set {1, 2, 3}
 Verdade eh true e mentira eh false
 lista de bools [true, false, true]
-vector de bools [1, 0, 1]
+vector de bools [true, false, true]
 <<<<<<<<
