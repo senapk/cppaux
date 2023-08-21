@@ -10,7 +10,7 @@
 
 ## Instalação no sistema
 
-- Copie o arquivo para uma pasta de bibliotecas do seu sistema e inclua no seu código como `#include <fn.hpp>`.
+- Copie o arquivo para uma pasta de includes do sistema e use no seu código como `#include <fn.hpp>`.
   - Windows: Copie a biblioteca para dentro da pasta MinGW\include.
   - Linux: Copie a biblioteca para dentro da pasta /usr/local/include.
 
@@ -30,7 +30,7 @@ int main() {
 
 ## Usando como arquivo local do projeto
 
-- Copie o arquivo fn.hpp para dentro da pasta do seu projeto e inclua no seu código como `#include "fn.hpp"`.
+- Copie o arquivo para a pasta do seu projeto e inclua no seu código como `#include "fn.hpp"`.
 
 ```bash
 curl https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp -o fn.hpp
