@@ -84,7 +84,7 @@ int main() {
     - Modo função: `write(data)`.
     - Modo pipeline: `data | WRITE())`.
 
-[](load)[](guides/duas.cpp)[](fenced=cpp)
+<!-- load guides/duas.cpp fenced=cpp -->
 
 ```cpp
 #include <iostream>
@@ -102,7 +102,7 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ## Resumo das funções
 
@@ -171,7 +171,7 @@ Esse modo já está habilitado na biblioteca, mas pode ser inserido manualmente 
 
 Outra função útil para manipulação de strings foi inspirada no operator + do javascript, que permite converter uma string em um número.
 
-[](load)[](guides/str.cpp)[](fenced=cpp)
+<!-- load guides/str.cpp fenced=cpp -->
 
 ```cpp
 #include <iostream>
@@ -190,11 +190,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### PRINT
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=print)
+<!-- load fn.hpp fenced=cpp:extract=print -->
 
 ```cpp
 /**
@@ -204,16 +204,16 @@ int main() {
  * @param Args Os argumentos a serem substituídos
  * @return O texto formatado
  * 
- * @warning print("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @warning print("O {} é {%0.2f} e o {} é {%0.2f}", "pi", 3.141592653, "e", 2.7182818);
  * @note https://github.com/senapk/cppaux#print
  * 
  */
 template<typename... Args> std::string print(std::string fmt, Args ...args)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/print.cpp)[](fenced=cpp)
+<!-- load tests/print.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -304,11 +304,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### WRITE
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=write)
+<!-- load fn.hpp fenced=cpp:extract=write -->
 
 ```cpp
 /**
@@ -325,9 +325,9 @@ int main() {
 template <typename PRINTABLE> const PRINTABLE& write(const PRINTABLE& data, str_view end = "\n") 
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/write.cpp)[](fenced=cpp)
+<!-- load tests/write.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -372,11 +372,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### TOSTR
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=tostr)
+<!-- load fn.hpp fenced=cpp:extract=tostr -->
 
 ```cpp
 /**
@@ -403,9 +403,9 @@ int main() {
 template <typename T> std::string tostr(const T& t     , const str_view& format = "");
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/tostr.cpp)[](fenced=cpp)
+<!-- load tests/tostr.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -469,11 +469,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### FORMAT
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=format)
+<!-- load fn.hpp fenced=cpp:extract=format -->
 
 ```cpp
 /**
@@ -485,16 +485,16 @@ int main() {
  * @param Args Os argumentos a serem substituídos
  * @return O texto formatado
  * 
- * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @warning format("O {} é {%0.2f} e o {} é {%0.2f}", "pi", 3.141592653, "e", 2.7182818);
  * @note https://github.com/senapk/cppaux#format
  * 
  */
 template<typename... Args> std::string format(std::string fmt, Args ...args) 
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/format.cpp)[](fenced=cpp)
+<!-- load tests/format.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -532,11 +532,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### INPUT
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=input)
+<!-- load fn.hpp fenced=cpp:extract=input -->
 
 ```cpp
 /**
@@ -554,9 +554,9 @@ int main() {
 inline std::string input(std::istream & is = std::cin)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/input.cpp)[](fenced=cpp)
+<!-- load tests/input.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -568,11 +568,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### JOIN
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=join)
+<!-- load fn.hpp fenced=cpp:extract=join -->
 
 ```cpp
 /**
@@ -595,9 +595,9 @@ template <typename T>
 std::string join(const T& t, const str_view& separator = "", const str_view& cfmt = "") 
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/join.cpp)[](fenced=cpp)
+<!-- load tests/join.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -624,11 +624,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### RANGE
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=range)
+<!-- load fn.hpp fenced=cpp:extract=range -->
 
 ```cpp
 /**
@@ -646,9 +646,9 @@ int main() {
 inline std::vector<int> range(int init, int end, int step = 1)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/range.cpp)[](fenced=cpp)
+<!-- load tests/range.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -693,11 +693,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### SLICE
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=slice)
+<!-- load fn.hpp fenced=cpp:extract=slice -->
 
 ```cpp
 /**
@@ -718,9 +718,9 @@ template<typename CONTAINER>
 auto slice(const CONTAINER& container, int begin = 0)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/slice.cpp)[](fenced=cpp)
+<!-- load tests/slice.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -767,11 +767,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### FILTER
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=filter)
+<!-- load fn.hpp fenced=cpp:extract=filter -->
 
 ```cpp
 /**
@@ -786,9 +786,9 @@ template<typename CONTAINER, typename FUNCTION>
 auto filter(const CONTAINER& container, FUNCTION fn)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/filter.cpp)[](fenced=cpp)
+<!-- load tests/filter.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -818,11 +818,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### MAP
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=map)
+<!-- load fn.hpp fenced=cpp:extract=map -->
 
 ```cpp
 /**
@@ -838,9 +838,9 @@ template<typename CONTAINER, typename FUNCTION>
 auto map(const CONTAINER& container, FUNCTION fn)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/map.cpp)[](fenced=cpp)
+<!-- load tests/map.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -868,11 +868,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### SPLIT
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=split)
+<!-- load fn.hpp fenced=cpp:extract=split -->
 
 ```cpp
 /**
@@ -889,9 +889,9 @@ int main() {
 inline std::vector<std::string> split(std::string content, char delimiter = ' ')
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/split.cpp)[](fenced=cpp)
+<!-- load tests/split.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -906,11 +906,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### UNPACK
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=unpack)
+<!-- load fn.hpp fenced=cpp:extract=unpack -->
 
 ```cpp
 /**
@@ -930,9 +930,9 @@ template <typename... TS>
 std::tuple<TS...> unpack(const std::string& line, char delimiter)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/unpack.cpp)[](fenced=cpp)
+<!-- load tests/unpack.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -949,11 +949,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### ZIP
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=zip)
+<!-- load fn.hpp fenced=cpp:extract=zip -->
 
 ```cpp
 /**
@@ -971,9 +971,9 @@ template<typename CONTAINER_A, typename CONTAINER_B>
 auto zip(const CONTAINER_A& A, const CONTAINER_B& B)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/zip.cpp)[](fenced=cpp)
+<!-- load tests/zip.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -992,11 +992,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### ZIPWITH
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=zipwith)
+<!-- load fn.hpp fenced=cpp:extract=zipwith -->
 
 ```cpp
 /**
@@ -1015,9 +1015,9 @@ template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
 auto zipwith(const CONTAINER_A& A, const CONTAINER_B& B, FNJOIN fnjoin)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/zipwith.cpp)[](fenced=cpp)
+<!-- load tests/zipwith.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -1045,11 +1045,11 @@ int main() {
 }
 ```
 
-[](load)
+<!-- load -->
 
 ### ENUMERATE
 
-[](load)[](fn.hpp)[](fenced=cpp:extract=enumerate)
+<!-- load fn.hpp fenced=cpp:extract=enumerate -->
 
 ```cpp
 /**
@@ -1064,9 +1064,9 @@ template<typename CONTAINER>
 auto enumerate(const CONTAINER& container)
 ```
 
-[](load)
+<!-- load -->
 
-[](load)[](tests/enumerate.cpp)[](fenced=cpp)
+<!-- load tests/enumerate.cpp fenced=cpp -->
 
 ```cpp
 #include "fn.hpp"
@@ -1101,4 +1101,4 @@ __4__:9.34
 }
 ```
 
-[](load)
+<!-- load -->

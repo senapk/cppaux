@@ -410,7 +410,7 @@ public:
  * @param Args Os argumentos a serem substituídos
  * @return O texto formatado
  * 
- * @warning format("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @warning format("O {} é {%0.2f} e o {} é {%0.2f}", "pi", 3.141592653, "e", 2.7182818);
  * @note https://github.com/senapk/cppaux#format
  * 
  */
@@ -433,7 +433,7 @@ template<typename... Args> std::string format(std::string fmt, Args ...args)
  * @param Args Os argumentos a serem substituídos
  * @return O texto formatado
  * 
- * @warning print("O {} é {0.2f} e o {} é {0.2f}", "pi", 3.141592653, "e", 2.7182818);
+ * @warning print("O {} é {%0.2f} e o {} é {%0.2f}", "pi", 3.141592653, "e", 2.7182818);
  * @note https://github.com/senapk/cppaux#print
  * 
  */
