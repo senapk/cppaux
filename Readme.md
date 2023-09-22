@@ -92,7 +92,7 @@ int main() {
 #include "fn.hpp"
 using namespace fn;
 int main() {
-    std::vector<double> vet {1, 2, 3, 4};
+    std::vector<int> vet {1, 2, 3, 4};
     
     //modo função
     write(tostr(vet, "%02d")); //imprime [01, 02, 03, 04]
