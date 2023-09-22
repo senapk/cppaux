@@ -75,6 +75,9 @@
         "bitset": "cpp",
         "typeindex": "cpp",
         "forward_list": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "any": "cpp",
+        "format": "cpp",
+        "stdfloat": "cpp"
     }
 }

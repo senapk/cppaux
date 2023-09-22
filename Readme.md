@@ -198,14 +198,20 @@ int main() {
 
 ```cpp
 /**
- * Invoca a função format e imprime o resultado na tela
+ * @note #### `print(str fmt, Args ...args) -> str`
  * 
- * @param fmt O texto com os {} para substituir pelos argumentos
- * @param Args Os argumentos a serem substituídos
- * @return O texto formatado
+ * @note - Invoca a função `format` e imprime o resultado na tela.
+ * @note - As quebras de linha precisam ser inseridas explicitamente.
  * 
- * @warning print("O {} é {%0.2f} e o {} é {%0.2f}", "pi", 3.141592653, "e", 2.7182818);
- * @note https://github.com/senapk/cppaux#print
+ * @note #### Parâmetros
+ * @note `param: fmt` O texto com os {} para substituir pelos argumentos.
+ * @note `param: args` Os argumentos a serem substituídos.
+ * @note `return` O texto que foi impresso.
+ * 
+ * @note #### Exemplos
+ * @note `print("O {} é {%0.2f}.\n", "pi", 3.141592653); //o pi e 3.14.`
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#print
  * 
  */
 template<typename... Args> std::string print(std::string fmt, Args ...args)
@@ -312,15 +318,23 @@ int main() {
 
 ```cpp
 /**
- * Tranforma um dado em string utilizando a função tostr e envia para o std::cout quebrando a linha.
+ * @note #### `write(T data, str end = "\n") -> T`
+ * @note #### `T data| WRITE(str end = "\n") -> T`
  * 
- * @param data Dado a ser transformado em string
- * @param end (opcional) String de finalização
- * @return Dado original
+ * @note - Envia o dado para o `std::cout` quebrando a linha.
+ * @note - Se o dado não for uma `string`, será convertido pela função `tostr`.
+ * @note - O modo pipe é `| WRITE()`.
  * 
- * @warning write(std::vector<int> {1, 2, 3}); // [1, 2, 3]
+ * @note #### Parâmetros
+ * @note `param: data` Dado a ser transformado e impresso.
+ * @note `param: end` (opcional) String a ser inserida no final da linha
+ * @note `return` O dado original recebido.
  * 
- * @note https://github.com/senapk/cppaux#write
+ * @note #### Exemplos
+ * @note `write(vector<int> {1, 2, 3}); // [1, 2, 3]`
+ * @note `vector<int> {1, 2, 3} | WRITE(); // [1, 2, 3]`
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#write
  */
 template <typename PRINTABLE> const PRINTABLE& write(const PRINTABLE& data, str_view end = "\n") 
 ```
@@ -380,27 +394,46 @@ int main() {
 
 ```cpp
 /**
- * Converte o dado passado em string.
+ * @note #### `tostr(T data, str cfmt = "") -> str`
+ * @note #### `T data| TOSTR(str cfmt = "") -> str`
+ * @note - Converte o dado passado em string.
  * 
- * Se passado o parâmetro de formatação cfmt, o dado será formatado usando o modelo do printf.
- * Se o dado for um container, o formato será aplicado em todos os elementos
- * do container recursivamente.
+ * @note #### Parâmetros
+ * @note `param: data` Dado a ser convertido.
+ * @note `param: cfmt` Parâmetro de formatação no modo printf.
+ * @note `return` String com o dado convertido.
  * 
- * vectors, lists e arrays são impressos entre colchetes.
- * maps e sets são impressos entre chaves.
- * pairs e tuples são impressos entre parênteses.
+ * @note #### Funcionamento para tipos primitivos
+ * @note - Converte o dado em string.
+ * @note - Se `cfmt` for passado, o dado será formatado usando o modelo do `printf`.
+ * @note `tostr(1.2) | WRITE(); // "1.2"`
+ * @note `tostr(1.2, "%.4f") | WRITE(); // "1.2000"`
  * 
- * Para classe do usuário ser impressa, ela deve sobrecarregar o ostream& operador <<.
+ * @note #### Funcionamento para containers
+ * @note - Elementos são impressos usando vírgulas como separador.
+ * @note `vector`, `list` e `array` são impressos entre colchetes. 
+ * @note `map` e `set` são impressos entre chaves. 
+ * @note `pair` e `tuple` são impressos entre parênteses.
+ * @note - O parâmetro de formatação é aplicado em todos os elementos do container recursivamente.
+ * @note `tostr(list<int>{1,2,3}, "%02d") | WRITE(); //[01, 02, 03]`
  * 
- * @param data Dado a ser convertido
- * @param cfmt (opcional) Parâmetro de formatação no modo printf
- * @return String com o dado convertido
+ * @note #### Formatação personalizada
+ * @note - Veja a função `join`.
+ * @note `std::vector<int> vet {1, 2, 3};`
+ * @note `join(vet, " - ", "%02d") | WRITE(); // "01 - 02 - 03"`
  * 
- * @warning tostr(std::list<int>{1,2,3}, "%02d") | WRITE();
+ * @note #### Funcionamento para tipos do usuário
+ * @note - Basta implementar a função de saída
+ * @note `ostream& operador <<(ostream& os, TIPO tipo)`.
  * 
- * @note https://github.com/senapk/cppaux#tostr
+ * @note  #### Exemplos
+ * @note `tostr(std::list<int>{1,2,3}, "%02d") | WRITE(); //[01, 02, 03]`
+ * @note `std::pair<int, int>(2, 1) | TOSTR() | WRITE(); //(2, 1)`
+ * 
+ * @note  #### Mais exemplos em https://github.com/senapk/cppaux#tostr
+ * 
  */
-template <typename T> std::string tostr(const T& t     , const str_view& format = "");
+template <typename T> std::string tostr(const T& data     , const str_view& cfmt) 
 ```
 
 <!-- load -->
@@ -477,19 +510,27 @@ int main() {
 
 ```cpp
 /**
- * Formata uma string com base nos argumentos passados utilizando um modelo de chaves para posicionar os argumentos.
- * Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
- * Não primitivos são formatados de acordo com a função TOSTR
+ * @note #### `format(str fmt, Args ...args ) -> str`
+ * @note #### `str fmt| FORMAT(Args ...args ) -> str`
  * 
- * @param fmt O texto com os {} para substituir pelos argumentos
- * @param Args Os argumentos a serem substituídos
- * @return O texto formatado
+ * @note - Formata uma string com base nos argumentos passados 
+ * @note - Utilizando um modelo de chaves para posicionar os argumentos.
+ * @note - Se dentro da chave, houver um string de formatação, o dado será formatado com base nela.
+ * @note - Não primitivos são formatados de acordo com a função `tostr`
  * 
- * @warning format("O {} é {%0.2f} e o {} é {%0.2f}", "pi", 3.141592653, "e", 2.7182818);
- * @note https://github.com/senapk/cppaux#format
+ * @note #### Parâmetros
+ * @note `param: fmt` O texto com os {} para substituir pelos argumentos.
+ * @note `param: args` Os argumentos a serem substituídos.
+ * @note `return` O texto formatado.
+ * 
+ * @note #### Exemplos
+ * @note `format("O {} é {%0.2f}.", "pi", 3.141592653) | WRITE(); //o pi e 3.14.`
+ * @note `"O {} é {%0.2f}." | FORMAT("pi", 3.141592653) | WRITE(); //o pi e 3.14.`
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#format
  * 
  */
-template<typename... Args> std::string format(std::string fmt, Args ...args) 
+std::string format(std::string fmt, Args ...args) 
 ```
 
 <!-- load -->
@@ -529,6 +570,9 @@ int main() {
 
     "Eu ({<10}) {%02d} bananas{}" | FORMAT("comi"s, 5, '.') | WRITE(); 
     // Eu (comi      ) 05 bananas.
+
+    "Hoje eh dia {{{}}}" | FORMAT(5) | WRITE();
+    // Hoje eh dia {5}
 }
 ```
 
@@ -540,16 +584,21 @@ int main() {
 
 ```cpp
 /**
- * Extrai uma linha inteira e retorna como string
- * O padrão é o std::cin, mas pode ser um fluxo ou arquivo
- * Se não houver mais linhas, lança uma exceção
+ * @note #### `input(istream source = std::cin) -> str`
  * 
- * @param source (opcional) de onde ler a linha
- * @return linha lida
+ * @note - Extrai uma linha inteira e retorna como string.
+ * @note - O padrão é o std::cin, mas pode ser um fluxo ou arquivo.
+ * @note - Se não houver mais linhas, lança uma exceção.
  * 
- * @warning auto line = input();
+ * @note #### Parâmetros
+ * @note `param: source` (opcional) de onde ler a linha.
+ * @note `return` linha lida.
+ * @note `throws: std::runtime_error` Caso não haja mais linhas.
  * 
- * @note https://github.com/senapk/cppaux#input
+ * @note #### Exemplos
+ * @note `auto line = input();`
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#input
  */
 inline std::string input(std::istream & is = std::cin)
 ```
@@ -576,23 +625,27 @@ int main() {
 
 ```cpp
 /**
- * Transforma um container, par ou tupla em string, separando os elementos
- * pelo separador e envolvendo com os brakets.
- *
- * Se os elementos não forem strings, eles serão transformados em string utilizando
- * a função tostr.
+ * @note #### `join(T container, str separator = "", str cfmt = "") -> str`
+ * @note #### `T container| JOIN(str separator = "", str cfmt = "") -> str`
  * 
- * @param container Container a ser transformado em string
- * @param separator Separador entre os elementos
- * @param cfmt      Formato para cada elemento
- * @return string com os elementos concatenados
+ * @note - Transforma um container, par ou tupla em string.
+ * @note - Se os elementos não forem strings, eles serão transformados pela função `tostr`.
  * 
- * @warning join(std::vector<int>{1,2,3}, " ") | WRITE(); // "1 2 3"
+ * @note #### Parâmetros
+ * @note `param: container` Container a ser transformado em string.
+ * @note `param: separator` Separador entre os elementos.
+ * @note `param: cfmt` String de formatação.
+ * @note `return` String com os elementos concatenados.
  * 
- * @note https://github.com/senapk/cppaux#join
+ * @note  #### Exemplos
+ * @note `join(vector<int>{1, 2, 3}, " ") | WRITE(); // "1 2 3"`
+ * @note `vector<int>{1, 2, 3} | JOIN("=") | WRITE(); // "1=2=3"`
+ * @note `vector<int>{1, 2, 3} | JOIN("=", "%02d") | WRITE(); // "01=02=03"`
+ * 
+ * @note  #### Mais exemplos em https://github.com/senapk/cppaux#join
  */
 template <typename T>
-std::string join(const T& t, const str_view& separator = "", const str_view& cfmt = "") 
+std::string join(const T& container, const str_view& separator = "", const str_view& cfmt = "") 
 ```
 
 <!-- load -->
@@ -632,16 +685,21 @@ int main() {
 
 ```cpp
 /**
- * @brief Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step.
+ * @note #### `range(int init, int end, int step = 1) -> vector<int>`
  * 
- * @param init início
- * @param end limite superior
- * @param step passo do incremento
- * @return vetor de inteiros
+ * @note - Gera um vetor de inteiros de init até end, mas não incluindo end, com passo step.
  * 
- * @warning range(0, 10, 2) | WRITE(); // [0, 2, 4, 6, 8]
+ * @note #### Parâmetros
+ * @note `param: init` início.
+ * @note `param: end` limite superior.
+ * @note `param: step` passo do incremento.
+ * @note `return` vetor de inteiros.
  * 
- * @note https://github.com/senapk/cppaux#range
+ * @note #### Exemplos
+ * @note `range(0, 10) | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`
+ * @note `range(0, 10, 2) | WRITE(); // [0, 2, 4, 6, 8]`
+ * 
+ * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#range
 */
 inline std::vector<int> range(int init, int end, int step = 1)
 ```
@@ -701,18 +759,26 @@ int main() {
 
 ```cpp
 /**
- * Fatia um container de begin até o fim retornando um vector com os elementos copiados.
- * O funcionamento é equivalente à função slice do Python ou do Javascript. Se não passado
- * nenhum parâmetro, copia todos os elementos. Os índices podem ser negativos para indicar
- * que a contagem deve ser feita a partir do final.
+ * @note #### `slice(CONTAINER<T> container, int begin = 0) -> vector<T>`
+ * @note #### `CONTAINER<T> container| SLICE(int begin = 0) -> vector<T>`
  * 
- * @param container Container a ser fatiado
- * @param begin (opcional) Índice inicial
- * @return Vector com os elementos copiados
+ * @note - Fatia um container retornando um `vector` com os elementos copiados.
+ * @note - Funciona como a função `slice` do Python ou do Javascript. 
+ * @note - Se não passado nenhum parâmetro, copia todos os elementos. 
+ * @note - Os índices podem ser negativos para contar a partir final.
  * 
- * @warning std::vector<int>{1, 2, 3, 4, 5} | SLICE(1)  | WRITE(); // [2, 3, 4, 5]
+ * @note #### Parâmetros
+ * @note `param: container` container a ser fatiado.
+ * @note `param: begin` (opcional) índice inicial.
+ * @note `return` vector com os elementos copiados.
  * 
- * @note https://github.com/senapk/cppaux#slice
+ * @note #### Exemplos
+ * @note `vector<int> vet {1, 2, 3, 4, 5};`
+ * @note `slice(vet, 1) | WRITE(); // [2, 3, 4, 5]`
+ * @note `slice(vet, -2) | WRITE(); // [4, 5]`
+ * @note `vet | SLICE(1) | WRITE(); // [2, 3, 4, 5]`
+ * 
+ * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#slice
 */
 template<typename CONTAINER>
 auto slice(const CONTAINER& container, int begin = 0)
@@ -775,12 +841,23 @@ int main() {
 
 ```cpp
 /**
- * Retorna um vetor com os elementos do container que satisfazem a função predicado fn
- * @param container Container a ser filtrado
- * @param fn Função predicado
- * @return Vector com os elementos que satisfazem a função predicado
+ * @note #### `filter(CONTAINER<T> container, FUNCTION fn) -> vector<T>`
+ * @note #### `CONTAINER<T> container| FILTER(FUNCTION fn) -> vector<T>`
  * 
- * @note https://github.com/senapk/cppaux#filter
+ * @note - Retorna um vetor com os elementos do container que satisfazem a função predicado fn.
+ * 
+ * @note #### Parâmetros
+ * @note `param: container` Container a ser filtrado.
+ * @note `param: fn` Função predicado.
+ * @note `return` Vector com os elementos que satisfazem a função predicado.
+ * 
+ * @note #### Exemplos
+ * @note `vector<int> vet {1, 2, 3};`
+ * @note `filter(vet, [](int x) {return x % 2 == 0;}) | WRITE(); // [2]`
+ * @note `vet| FILTER([](int x) {return x % 2 == 0;}) | WRITE(); // [2]`
+ * 
+ * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#filter
+ * 
  */
 template<typename CONTAINER, typename FUNCTION>
 auto filter(const CONTAINER& container, FUNCTION fn)
@@ -826,13 +903,22 @@ int main() {
 
 ```cpp
 /**
- * Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container
+ * @note #### `map(CONTAINER<T> container, FUNCTION fn) -> vector<fn(T)>`
+ * @note #### `CONTAINER<T> container| MAP(FUNCTION fn) -> vector<fn(T)>`
  * 
- * @param container Container a ser mapeado
- * @param fn Função a ser aplicada em cada elemento do container
- * @return Vector com os elementos resultantes da aplicação da função
+ * @note - Retorna um vetor com o resultado da aplicação da função fn para cada elemento do container.
  * 
- * @note https://github.com/senapk/cppaux#map
+ * @note #### Parâmetros
+ * @note `param: container` Container a ser mapeado.
+ * @note `param: fn` Função a ser aplicada em cada elemento do container.
+ * @note `return` Vector com os elementos resultantes da aplicação da função.
+ * 
+ * @note #### Exemplos
+ * @note `vector<int> vet {1, 2, 3};`
+ * @note `map(vet, [](int x) {return x * x;}) | WRITE(); // [1, 4, 9]`
+ * @note `vet| MAP([](int x) {return x * x;}) | WRITE(); // [1, 4, 9]`
+ * 
+ * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#map
  */
 template<typename CONTAINER, typename FUNCTION>
 auto map(const CONTAINER& container, FUNCTION fn)
@@ -876,15 +962,23 @@ int main() {
 
 ```cpp
 /**
- * Transforma uma string em um vetor de strings, separando pelo delimitador
+ * @note #### `split(str content, char delimiter = ' ') -> vector<str>`
+ * @note #### `str content| SPLIT(char delimiter = ' ') -> vector<str>`
  * 
- * @param content String a ser separada
- * @param delimiter (opcional) Caractere delimitador
- * @return Vetor de strings
+ * @note - Transforma uma string em um vetor de strings, separando pelo delimitador.
  * 
- * @warning split("a,b,c", ',') | WRITE(); // [a, b, c]
- * 
- * @note https://github.com/senapk/cppaux#split
+ * @note #### Parâmetros
+ * @note `param: content` String a ser separada.
+ * @note `param: delimiter` (opcional) Caractere delimitador.
+ * @note `return` Vetor de strings.
+ *
+ * @note #### Exemplos
+ * @note `split("a,b,c", ',') | WRITE(); // [a, b, c]`
+ * @note `"a,b,c"| SPLIT(',') | WRITE(); // [a, b, c]`
+ * @note `split("a b c") | WRITE(); // [a, b, c]`
+ * @note `"a b c"|SPLIT()| WRITE(); // [a, b, c]`
+ *  
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#split
  */
 inline std::vector<std::string> split(std::string content, char delimiter = ' ')
 ```
@@ -914,16 +1008,22 @@ int main() {
 
 ```cpp
 /**
- * Transforma de string para tupla dados os tipos de cada elemento e o char separador.
+ * @note #### `unpack<...TS>(str value, char delimiter) -> tuple<TS...>`
+ * @note #### `str value| UNPACK<...TS>(char delimiter) -> tuple<TS...>`
  * 
- * @tparam TS... Tipos a serem extraídos
- * @param value String a ser convertida
- * @param delimiter Caractere separador entre os elementos
- * @return Tupla com os elementos convertidos
+ * @note - Transforma de string para tupla dados os tipos de cada elemento e o char separador.
  * 
- * @warning unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva")
+ * @note #### Parâmetros
+ * @note `param: TS...` Tipos a serem extraídos.
+ * @note `param: value` String a ser convertida.
+ * @note `param: delimiter` Caractere separador entre os elementos.
+ * @note `return` Tupla com os elementos convertidos.
  * 
- * @note https://github.com/senapk/cppaux#unpack
+ * @note #### Exemplos
+ * @note unpack<int, double, std::string>("1:2.4:uva", ':') | WRITE(); // (1, 2.4, "uva") 
+ * @note "1:2.4:uva"| UNPACK<int, double, std::string>(':') | WRITE(); // (1, 2.4, "uva")
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#unpack
  * 
  */
 template <typename... TS>
@@ -957,15 +1057,21 @@ int main() {
 
 ```cpp
 /**
- * Une dois containers em um vetor de pares limitado ao menor tamanho dos dois containers.
+ * @note #### `zip(CONTAINER_A<T> container_a, CONTAINER_B<K> container_b) -> vector<pair<T, K>>`
+ * @note #### `CONTAINER_A<T> container_a| ZIP(CONTAINER_B<K> container_b) -> vector<pair<T, K>>`
  * 
- * @param container_a primeiro container
- * @param container_b segundo container
- * @return Vetor de pares
+ * @note - Une dois containers em um vetor de pares limitado ao menor tamanho dos dois containers.
  * 
- * @warning zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]
+ * @note #### Parâmetros
+ * @note `param: container_a` primeiro container
+ * @note `param: container_b` segundo container
+ * @note `return` Vetor de pares
  * 
- * @note https://github.com/senapk/cppaux#zip
+ * @note #### Exemplos
+ * @note `zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]`
+ * @note `vector<int>{1, 2, 3}| ZIP(string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]`
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#zip
  */
 template<typename CONTAINER_A, typename CONTAINER_B>
 auto zip(const CONTAINER_A& A, const CONTAINER_B& B)
@@ -1000,15 +1106,23 @@ int main() {
 
 ```cpp
 /**
- * Une dois containers em um único container limitado ao menor tamanho dos dois containers
- * colocando o resultado da função fnjoin em cada par no container de saída.
+ * @note #### `zipwith(CONTAINER_A<T> container_a, CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
+ * @note #### `CONTAINER_A<T> container_a| ZIPWITH(CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
  * 
- * @param container_a primeiro container
- * @param container_b segundo container
- * @return Vetor com os resultados
+ * @note - Une dois containers através da aplicação da função fnjoin em cada par limitado ao menor tamanho dos dois containers.
  * 
- * @warning zipwith(range(10), "pterodactilo"s, [](auto x, auto y) { return tostr(x) + y; }) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]
- * @note https://github.com/senapk/cppaux#zipwith
+ * @note #### Parâmetros
+ * @note `param: container_a` primeiro container
+ * @note `param: container_b` segundo container
+ * @note `param: fnjoin` função a ser aplicada em cada par
+ * @note `return` Vetor com os resultados
+ * 
+ * @note #### Exemplos
+ * @note `auto concat = [](auto x, auto y) { return tostr(x) + y; };`
+ * @note `zipwith(vector<int>{1, 2, 3}, string("pterodactilo"), concat) | WRITE(); // ["1p", "2t", "3e"]`
+ * @note `zipwith(range(10), "pterodactilo"s, concat) | WRITE(); // ["0p", "1t", "2e", "3r", "4o", "5d", "6a", "7c", "8t", "9i"]`
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#zipwith
  * 
  */
 template<typename CONTAINER_A, typename CONTAINER_B, typename FNJOIN>
@@ -1053,12 +1167,21 @@ int main() {
 
 ```cpp
 /**
- * Retorna um vetor de pares com os indices seguidos dos elementos originais do vetor
+ * @note #### `enumerate(CONTAINER<T> container) -> vector<pair<int, T>>`
+ * @note #### `CONTAINER<T> container|ENUMERATE()-> vector<pair<int, T>>`
  * 
- * @param container Container a ser enumerado
- * @return Vector com os pares
+ * @note - Retorna um vetor de pares com os indices seguidos dos elementos originais do vetor.
  * 
- * @note https://github.com/senapk/cppaux#enumerate
+ * @note #### Parâmetros
+ * @note `param: container` Container a ser enumerado.
+ * @note `return` Vector com os pares.
+ * 
+ * @note #### Exemplos
+ * @note `vector<int> vet {1, 2, 3};`
+ * @note `enumerate(vet) | WRITE(); // [(0, 1), (1, 2), (2, 3)]`
+ * @note `vet|ENUMERATE()| WRITE(); // [(0, 1), (1, 2), (2, 3)]`
+ * 
+ * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#enumerate
  */
 template<typename CONTAINER>
 auto enumerate(const CONTAINER& container)
