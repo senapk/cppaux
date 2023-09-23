@@ -218,7 +218,7 @@ std::string __join(const std::pair<T1, T2>& the_pair, const str_view& separator,
     return ss.str();
 }
 }
-//guide
+//__guide join
 //[[join]]
 /**
  * @note #### `join(T container, str separator = "", str cfmt = "") -> str`
@@ -252,6 +252,7 @@ struct JOIN {
     str_view delimiter;
     str_view cfmt;
 
+//__guide join
 /**
  * @note #### `join(T container, str separator = "", str cfmt = "") -> str`
  * @note #### `T container| JOIN(str separator = "", str cfmt = "") -> str`
@@ -301,7 +302,7 @@ template <typename T>             inline std::string __tostr(const std::shared_p
 
 }
 
-//guide
+//__guide tostr
 //[[tostr]]
 /**
  * @note #### `tostr(T data, str cfmt = "") -> str`
@@ -341,7 +342,6 @@ template <typename T>             inline std::string __tostr(const std::shared_p
  * @note `std::pair<int, int>(2, 1) | TOSTR() | WRITE(); //(2, 1)`
  * 
  * @note  #### Mais exemplos em https://github.com/senapk/cppaux#tostr
- * 
  */
 template <typename T> std::string tostr(const T& data     , const str_view& cfmt) 
 //[[tostr]]
@@ -353,6 +353,7 @@ template <typename T> std::string tostr(const T& data     , const str_view& cfmt
 struct TOSTR {
     str_view cfmt;
 
+//__guide tostr
 /**
  * @note #### `tostr(T data, str cfmt = "") -> str`
  * @note #### `T data| TOSTR(str cfmt = "") -> str`
@@ -391,7 +392,6 @@ struct TOSTR {
  * @note `std::pair<int, int>(2, 1) | TOSTR() | WRITE(); //(2, 1)`
  * 
  * @note  #### Mais exemplos em https://github.com/senapk/cppaux#tostr
- * 
  */
     TOSTR(const str_view& cfmt = "") : cfmt(cfmt) {}
 
@@ -487,6 +487,7 @@ class FORMAT
 
 public:
 
+//__guide format
 /**
  * @note #### `format(str fmt, Args ...args ) -> str`
  * @note #### `str fmt| FORMAT(Args ...args ) -> str`
@@ -533,8 +534,8 @@ public:
     friend std::string operator|(std::string fmt, FORMAT<Args...> obj) { return obj(fmt); }
 };
 
-template<typename... Args> 
-//guide
+
+//__guide format
 //[[format]]
 /**
  * @note #### `format(str fmt, Args ...args ) -> str`
@@ -557,6 +558,7 @@ template<typename... Args>
  * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#format
  * 
  */
+template<typename... Args> 
 std::string format(std::string fmt, Args ...args) 
 //[[format]]
 {
@@ -568,7 +570,7 @@ std::string format(std::string fmt, Args ...args)
 //-------------------- PRINT------------------------------
 //--------------------------------------------------------
 
-//guide
+//__guide print
 //[[print]]
 /**
  * @note #### `print(str fmt, Args ...args) -> str`
@@ -598,6 +600,25 @@ template<typename... Args> std::string print(std::string fmt, Args ...args)
 template<typename... Args> 
 struct PRINT {
     std::tuple<Args...> args;
+
+//__guide print
+/**
+ * @note #### `print(str fmt, Args ...args) -> str`
+ * 
+ * @note - Invoca a função `format` e imprime o resultado na tela.
+ * @note - As quebras de linha precisam ser inseridas explicitamente.
+ * 
+ * @note #### Parâmetros
+ * @note `param: fmt` O texto com os {} para substituir pelos argumentos.
+ * @note `param: args` Os argumentos a serem substituídos.
+ * @note `return` O texto que foi impresso.
+ * 
+ * @note #### Exemplos
+ * @note `print("O {} é {%0.2f}.\n", "pi", 3.141592653); //o pi e 3.14.`
+ * 
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#print
+ * 
+ */
     PRINT(Args ...args): args(std::forward<Args>(args)...) { }
     std::string operator()(std::string fmt) { return print(fmt, args); }
     friend std::string operator|(std::string fmt, PRINT<Args...> obj) { return obj(fmt); }
@@ -607,7 +628,7 @@ struct PRINT {
 //-------------------- WRITE -----------------------------
 //--------------------------------------------------------
 
-//guide
+//__guide write
 //[[write]]
 /**
  * @note #### `write(T data, str end = "\n") -> T`
@@ -619,7 +640,7 @@ struct PRINT {
  * 
  * @note #### Parâmetros
  * @note `param: data` Dado a ser transformado e impresso.
- * @note `param: end` (opcional) String a ser inserida no final da linha
+ * @note `param: end` (opcional) String a ser inserida no final da linha.
  * @note `return` O dado original recebido.
  * 
  * @note #### Exemplos
@@ -639,6 +660,7 @@ template <typename PRINTABLE> const PRINTABLE& write(const PRINTABLE& data, str_
 struct WRITE {
     str_view end;
 
+//__guide write
 /**
  * @note #### `write(T data, str end = "\n") -> T`
  * @note #### `T data| WRITE(str end = "\n") -> T`
@@ -649,7 +671,7 @@ struct WRITE {
  * 
  * @note #### Parâmetros
  * @note `param: data` Dado a ser transformado e impresso.
- * @note `param: end` (opcional) String a ser inserida no final da linha
+ * @note `param: end` (opcional) String a ser inserida no final da linha.
  * @note `return` O dado original recebido.
  * 
  * @note #### Exemplos
@@ -670,6 +692,7 @@ struct WRITE {
 
 class SLICE {
 public:
+//__guide slice1
 /**
  * @note #### `slice(CONTAINER<T> container, int begin = 0) -> vector<T>`
  * @note #### `CONTAINER<T> container| SLICE(int begin = 0) -> vector<T>`
@@ -691,12 +714,14 @@ public:
  * @note `vet | SLICE(1) | WRITE(); // [2, 3, 4, 5]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#slice
-*/
+ */
     SLICE(int begin = 0) {
         this->from_begin = begin == 0;
         this->begin = begin;
         this->to_end = true;
     }
+
+//__guide slice2
 /**
  * @note #### `slice(CONTAINER<T> container, int begin, int end) -> vector<T>`
  * @note #### `CONTAINER<T> container| SLICE(int begin, int end) -> vector<T>`
@@ -717,7 +742,7 @@ public:
  * @note `vet| SLICE(1, -1) | WRITE(); // [2, 3, 4]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#slice
-*/
+ */
     SLICE(int begin, int end) {
         this->begin = begin;
         this->end = end;
@@ -789,7 +814,7 @@ private:
     }
 };
 
-//guide
+//__guide slice1
 //[[slice]]
 /**
  * @note #### `slice(CONTAINER<T> container, int begin = 0) -> vector<T>`
@@ -812,7 +837,7 @@ private:
  * @note `vet | SLICE(1) | WRITE(); // [2, 3, 4, 5]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#slice
-*/
+ */
 template<typename CONTAINER>
 auto slice(const CONTAINER& container, int begin = 0)
 //[[slice]]
@@ -820,6 +845,7 @@ auto slice(const CONTAINER& container, int begin = 0)
     return SLICE(begin)(container);
 }
 
+//__guide slice2
 /**
  * @note #### `slice(CONTAINER<T> container, int begin, int end) -> vector<T>`
  * @note #### `CONTAINER<T> container| SLICE(int begin, int end) -> vector<T>`
@@ -840,7 +866,7 @@ auto slice(const CONTAINER& container, int begin = 0)
  * @note `vet| SLICE(1, -1) | WRITE(); // [2, 3, 4]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#slice
-*/
+ */
 template<typename CONTAINER>
 auto slice(CONTAINER container, int begin, int end)
 {
@@ -851,6 +877,7 @@ auto slice(CONTAINER container, int begin, int end)
 //-------------------- MAP   -----------------------------
 //--------------------------------------------------------
 
+//__guide map
 //[[map]]
 /**
  * @note #### `map(CONTAINER<T> container, FUNCTION fn) -> vector<fn(T)>`
@@ -883,6 +910,7 @@ auto map(const CONTAINER& container, FUNCTION fn)
 template <typename FUNCTION>
 struct MAP {
     FUNCTION fn;
+//__guide map
 /**
  * @note #### `map(CONTAINER<T> container, FUNCTION fn) -> vector<fn(T)>`
  * @note #### `CONTAINER<T> container| MAP(FUNCTION fn) -> vector<fn(T)>`
@@ -910,6 +938,7 @@ struct MAP {
 //-------------------- FILTER ----------------------------
 //--------------------------------------------------------
 
+//__guide filter
 //[[filter]]
 /**
  * @note #### `filter(CONTAINER<T> container, FUNCTION fn) -> vector<T>`
@@ -945,6 +974,8 @@ auto filter(const CONTAINER& container, FUNCTION fn)
 template <typename FUNCTION>
 struct FILTER {
     FUNCTION fn;
+
+//__guide filter
 /**
  * @note #### `filter(CONTAINER<T> container, FUNCTION fn) -> vector<T>`
  * @note #### `CONTAINER<T> container| FILTER(FUNCTION fn) -> vector<T>`
@@ -973,6 +1004,7 @@ struct FILTER {
 //-------------------- RANGE -----------------------------
 //--------------------------------------------------------
 
+//__guide range2
 // [[range]]
 /**
  * @note #### `range(int init, int end, int step = 1) -> vector<int>`
@@ -990,7 +1022,7 @@ struct FILTER {
  * @note `range(0, 10, 2) | WRITE(); // [0, 2, 4, 6, 8]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#range
-*/
+ */
 inline std::vector<int> range(int init, int end, int step = 1)
 //[[range]]
 {
@@ -1009,6 +1041,7 @@ inline std::vector<int> range(int init, int end, int step = 1)
     return aux;
 }
 
+//__guide range1
 /**
  * @note #### `range(int end) -> vector<int>`
  * 
@@ -1022,7 +1055,7 @@ inline std::vector<int> range(int init, int end, int step = 1)
  * @note `range(10) | WRITE(); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#range
-*/
+ */
 inline std::vector<int> range(int end) {
     return range(0, end, 1);
 }
@@ -1047,6 +1080,7 @@ struct RANGE {
 //-------------------- ENUMERATE -------------------------
 //--------------------------------------------------------
 
+//__guide enumerate
 //[[enumerate]]
 /**
  * @note #### `enumerate(CONTAINER<T> container) -> vector<pair<int, T>>`
@@ -1080,6 +1114,7 @@ auto enumerate(const CONTAINER& container)
 }
 
 struct ENUMERATE {
+//__guide enumerate
 /**
  * @note #### `enumerate(CONTAINER<T> container) -> vector<pair<int, T>>`
  * @note #### `CONTAINER<T> container|ENUMERATE()-> vector<pair<int, T>>`
@@ -1108,6 +1143,7 @@ struct ENUMERATE {
 //-------------------- STRTO -----------------------------
 //--------------------------------------------------------
 
+//__guide strto
 //[[strto]]
 /**
  * @note #### `strto<READABLE>(str value) -> READABLE`
@@ -1126,7 +1162,7 @@ struct ENUMERATE {
  * @note `strto<int>("1") | WRITE(); // 1`
  * @note `strto<double>("1.2") | WRITE(); // 1.2`
  * 
- * @note https://github.com/senapk/cppaux#strto
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#strto
  * 
 */
 template <typename READABLE>
@@ -1143,6 +1179,7 @@ READABLE strto(std::string value)
 
 template <typename READABLE>
 struct STRTO {
+//__guide strto
 /**
  * @note #### `strto<READABLE>(str value) -> READABLE`
  * @note #### `str value|STRTO<READABLE>()-> READABLE`
@@ -1160,7 +1197,7 @@ struct STRTO {
  * @note `strto<int>("1") | WRITE(); // 1`
  * @note `strto<double>("1.2") | WRITE(); // 1.2`
  * 
- * @note https://github.com/senapk/cppaux#strto
+ * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#strto
  * 
 */
     STRTO(){};
@@ -1172,6 +1209,7 @@ struct STRTO {
 //-------------------- NUMBER ----------------------------
 //--------------------------------------------------------
 
+//__guide number
 //[[number]]
 /**
  * @note #### `number(str value) -> double`
@@ -1196,6 +1234,7 @@ inline double number(std::string value)
 }
 
 struct NUMBER {
+//__guide number
 /**
  * @note #### `number(str value) -> double`
  * 
@@ -1224,6 +1263,8 @@ struct NUMBER {
 template <typename... Types>
 struct UNPACK {
     char delimiter;
+
+//__guide unpack
 /**
  * @note #### `unpack<...TS>(str value, char delimiter) -> tuple<TS...>`
  * @note #### `str value| UNPACK<...TS>(char delimiter) -> tuple<TS...>`
@@ -1268,6 +1309,7 @@ struct UNPACK {
     }
 };
 
+//__guide unpack
 //[[unpack]]
 /**
  * @note #### `unpack<...TS>(str value, char delimiter) -> tuple<TS...>`
@@ -1300,6 +1342,7 @@ std::tuple<TS...> unpack(const std::string& line, char delimiter)
 //-------------------- ZIP   -----------------------------
 //--------------------------------------------------------
 
+//__guide zip
 //[[zip]]
 /**
  * @note #### `zip(CONTAINER_A<T> container_a, CONTAINER_B<K> container_b) -> vector<pair<T, K>>`
@@ -1308,9 +1351,9 @@ std::tuple<TS...> unpack(const std::string& line, char delimiter)
  * @note - Une dois containers em um vetor de pares limitado ao menor tamanho dos dois containers.
  * 
  * @note #### Parâmetros
- * @note `param: container_a` primeiro container
- * @note `param: container_b` segundo container
- * @note `return` Vetor de pares
+ * @note `param: container_a` Primeiro container.
+ * @note `param: container_b` Segundo container.
+ * @note `return` Vetor de pares.
  * 
  * @note #### Exemplos
  * @note `zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]`
@@ -1340,6 +1383,8 @@ auto zip(const CONTAINER_A& A, const CONTAINER_B& B)
 template <typename CONTAINER_B>
 struct ZIP {
     CONTAINER_B container_b;
+
+//__guide zip
 /**
  * @note #### `zip(CONTAINER_A<T> container_a, CONTAINER_B<K> container_b) -> vector<pair<T, K>>`
  * @note #### `CONTAINER_A<T> container_a| ZIP(CONTAINER_B<K> container_b) -> vector<pair<T, K>>`
@@ -1347,9 +1392,9 @@ struct ZIP {
  * @note - Une dois containers em um vetor de pares limitado ao menor tamanho dos dois containers.
  * 
  * @note #### Parâmetros
- * @note `param: container_a` primeiro container
- * @note `param: container_b` segundo container
- * @note `return` Vetor de pares
+ * @note `param: container_a` Primeiro container.
+ * @note `param: container_b` Segundo container.
+ * @note `return` Vetor de pares.
  * 
  * @note #### Exemplos
  * @note `zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]`
@@ -1369,18 +1414,19 @@ struct ZIP {
 //-------------------- ZIPWITH ---------------------------
 //--------------------------------------------------------
 
+//__guide zipwith
 //[[zipwith]]
 /**
- * @note #### `zipwith(CONTAINER_A<T> container_a, CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
- * @note #### `CONTAINER_A<T> container_a| ZIPWITH(CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
+ * @note #### `zipwith(CONTAINER<T> container_a, CONTAINER<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
+ * @note #### `CONTAINER<T> container_a| ZIPWITH(CONTAINER<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
  * 
  * @note - Une dois containers através da aplicação da função fnjoin em cada par limitado ao menor tamanho dos dois containers.
  * 
  * @note #### Parâmetros
- * @note `param: container_a` primeiro container
- * @note `param: container_b` segundo container
- * @note `param: fnjoin` função a ser aplicada em cada par
- * @note `return` Vetor com os resultados
+ * @note `param: container_a` Primeiro container.
+ * @note `param: container_b` Segundo container.
+ * @note `param: fnjoin` Função a ser aplicada em cada par.
+ * @note `return` Vetor com os resultados.
  * 
  * @note #### Exemplos
  * @note `auto concat = [](auto x, auto y) { return tostr(x) + y; };`
@@ -1413,17 +1459,19 @@ template<typename CONTAINER_B, typename FNJOIN>
 struct ZIPWITH {
     CONTAINER_B container_b;
     FNJOIN fnjoin;
+
+//__guide zipwith
 /**
- * @note #### `zipwith(CONTAINER_A<T> container_a, CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
- * @note #### `CONTAINER_A<T> container_a| ZIPWITH(CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
+ * @note #### `zipwith(CONTAINER<T> container_a, CONTAINER<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
+ * @note #### `CONTAINER<T> container_a| ZIPWITH(CONTAINER<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
  * 
  * @note - Une dois containers através da aplicação da função fnjoin em cada par limitado ao menor tamanho dos dois containers.
  * 
  * @note #### Parâmetros
- * @note `param: container_a` primeiro container
- * @note `param: container_b` segundo container
- * @note `param: fnjoin` função a ser aplicada em cada par
- * @note `return` Vetor com os resultados
+ * @note `param: container_a` Primeiro container.
+ * @note `param: container_b` Segundo container.
+ * @note `param: fnjoin` Função a ser aplicada em cada par.
+ * @note `return` Vetor com os resultados.
  * 
  * @note #### Exemplos
  * @note `auto concat = [](auto x, auto y) { return tostr(x) + y; };`
@@ -1443,6 +1491,7 @@ struct ZIPWITH {
 //-------------------- SPLIT -----------------------------
 //--------------------------------------------------------
 
+//__guide split
 //[[split]]
 /**
  * @note #### `split(str content, char delimiter = ' ') -> vector<str>`
@@ -1476,6 +1525,8 @@ inline std::vector<std::string> split(std::string content, char delimiter = ' ')
 
 struct SPLIT {
     char delimiter;
+
+//__guide split
 /**
  * @note #### `split(str content, char delimiter = ' ') -> vector<str>`
  * @note #### `str content| SPLIT(char delimiter = ' ') -> vector<str>`
@@ -1505,6 +1556,7 @@ struct SPLIT {
 //-------------------- INPUT -----------------------------
 //--------------------------------------------------------
 
+//__guide input
 //[[input]]
 /**
  * @note #### `input(istream source = std::cin) -> str`
@@ -1514,8 +1566,8 @@ struct SPLIT {
  * @note - Se não houver mais linhas, lança uma exceção.
  * 
  * @note #### Parâmetros
- * @note `param: source` (opcional) de onde ler a linha.
- * @note `return` linha lida.
+ * @note `param: source` Origem da linha.
+ * @note `return` Linha lida.
  * @note `throws: std::runtime_error` Caso não haja mais linhas.
  * 
  * @note #### Exemplos
@@ -1533,6 +1585,7 @@ inline std::string input(std::istream & is = std::cin)
 }
 
 struct INPUT {
+//__guide input
 /**
  * @note #### `input(istream source = std::cin) -> str`
  * 
@@ -1541,8 +1594,8 @@ struct INPUT {
  * @note - Se não houver mais linhas, lança uma exceção.
  * 
  * @note #### Parâmetros
- * @note `param: source` (opcional) de onde ler a linha.
- * @note `return` linha lida.
+ * @note `param: source` Origem da linha.
+ * @note `return` Linha lida.
  * @note `throws: std::runtime_error` Caso não haja mais linhas.
  * 
  * @note #### Exemplos
@@ -1560,6 +1613,7 @@ struct INPUT {
 
 using namespace std::string_literals;
 
+//__guide operator+
 /**
  * @note #### `+str -> double`
  * 

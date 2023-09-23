@@ -327,7 +327,7 @@ int main() {
  * 
  * @note #### Parâmetros
  * @note `param: data` Dado a ser transformado e impresso.
- * @note `param: end` (opcional) String a ser inserida no final da linha
+ * @note `param: end` (opcional) String a ser inserida no final da linha.
  * @note `return` O dado original recebido.
  * 
  * @note #### Exemplos
@@ -431,7 +431,6 @@ int main() {
  * @note `std::pair<int, int>(2, 1) | TOSTR() | WRITE(); //(2, 1)`
  * 
  * @note  #### Mais exemplos em https://github.com/senapk/cppaux#tostr
- * 
  */
 template <typename T> std::string tostr(const T& data     , const str_view& cfmt) 
 ```
@@ -530,6 +529,7 @@ int main() {
  * @note #### Veja mais exemplos em https://github.com/senapk/cppaux#format
  * 
  */
+template<typename... Args> 
 std::string format(std::string fmt, Args ...args) 
 ```
 
@@ -591,8 +591,8 @@ int main() {
  * @note - Se não houver mais linhas, lança uma exceção.
  * 
  * @note #### Parâmetros
- * @note `param: source` (opcional) de onde ler a linha.
- * @note `return` linha lida.
+ * @note `param: source` Origem da linha.
+ * @note `return` Linha lida.
  * @note `throws: std::runtime_error` Caso não haja mais linhas.
  * 
  * @note #### Exemplos
@@ -700,7 +700,7 @@ int main() {
  * @note `range(0, 10, 2) | WRITE(); // [0, 2, 4, 6, 8]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#range
-*/
+ */
 inline std::vector<int> range(int init, int end, int step = 1)
 ```
 
@@ -779,7 +779,7 @@ int main() {
  * @note `vet | SLICE(1) | WRITE(); // [2, 3, 4, 5]`
  * 
  * @note #### Veja  mais exemplos em https://github.com/senapk/cppaux#slice
-*/
+ */
 template<typename CONTAINER>
 auto slice(const CONTAINER& container, int begin = 0)
 ```
@@ -1063,9 +1063,9 @@ int main() {
  * @note - Une dois containers em um vetor de pares limitado ao menor tamanho dos dois containers.
  * 
  * @note #### Parâmetros
- * @note `param: container_a` primeiro container
- * @note `param: container_b` segundo container
- * @note `return` Vetor de pares
+ * @note `param: container_a` Primeiro container.
+ * @note `param: container_b` Segundo container.
+ * @note `return` Vetor de pares.
  * 
  * @note #### Exemplos
  * @note `zip(vector<int>{1, 2, 3}, string("pterodactilo")) | WRITE(); //[(1, p), (2, t), (3, e)]`
@@ -1106,16 +1106,16 @@ int main() {
 
 ```cpp
 /**
- * @note #### `zipwith(CONTAINER_A<T> container_a, CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
- * @note #### `CONTAINER_A<T> container_a| ZIPWITH(CONTAINER_B<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
+ * @note #### `zipwith(CONTAINER<T> container_a, CONTAINER<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
+ * @note #### `CONTAINER<T> container_a| ZIPWITH(CONTAINER<K> container_b, FUNCTION fnjoin) -> vector<fnjoin(T, K)>`
  * 
  * @note - Une dois containers através da aplicação da função fnjoin em cada par limitado ao menor tamanho dos dois containers.
  * 
  * @note #### Parâmetros
- * @note `param: container_a` primeiro container
- * @note `param: container_b` segundo container
- * @note `param: fnjoin` função a ser aplicada em cada par
- * @note `return` Vetor com os resultados
+ * @note `param: container_a` Primeiro container.
+ * @note `param: container_b` Segundo container.
+ * @note `param: fnjoin` Função a ser aplicada em cada par.
+ * @note `return` Vetor com os resultados.
  * 
  * @note #### Exemplos
  * @note `auto concat = [](auto x, auto y) { return tostr(x) + y; };`
