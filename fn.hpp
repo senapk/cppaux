@@ -1,3 +1,15 @@
+//--------------------------------------------------------
+// BIBLIOTECA HEADER ONLY PARA C++ 
+//     MANIPULAÇÃO DE TEXTO
+//         FORMAT, TOSTR, PRINT, WRITE, SPLIT, JOIN
+//     E PROGRAMAÇÃO FUNCIONAL
+//         MAP, FILTER, SLICE, ENUMERATE
+//     EM MODO FUNÇÃO E MODO PIPELINE
+//--------------------------------------------------------
+//  VERSÃO 1.0.0
+//  https://github.com/senapk/cppaux
+//--------------------------------------------------------
+
 #pragma once
 
 #include <iostream>
