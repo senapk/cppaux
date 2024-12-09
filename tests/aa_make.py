@@ -7,6 +7,6 @@ cpp_files = [file[:-4] for file in os.listdir() if file.endswith('.cpp')]
 
 for file in cpp_files:
     
-    test_command = f"tko run {file}.cpp zz_{file}.tio"
+    test_command = f"tko test {file}.cpp zz_{file}.tio"
     print("$ " + test_command)
     os.system(test_command)

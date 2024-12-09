@@ -98,7 +98,7 @@ int main() {
     write(tostr(vet, "%02d")); //imprime [01, 02, 03, 04]
     
     //modo pipeline
-    vet | TOSTR("%02d") | WRITE(); //imprime [01, 02, 03, 04]
+    vet | TOSTR("%02d") | write(); //imprime [01, 02, 03, 04]
 }
 ```
 
@@ -222,6 +222,10 @@ template<typename... Args> std::string print(std::string fmt, Args ...args)
 <!-- load tests/print.cpp fenced=cpp -->
 
 ```cpp
+#define __LIST
+#define __SET
+#define __MAP
+#define __ARRAY
 #include "fn.hpp"
 using namespace fn;
 int main() {
@@ -344,6 +348,7 @@ template <typename PRINTABLE> const PRINTABLE& write(const PRINTABLE& data, str_
 <!-- load tests/write.cpp fenced=cpp -->
 
 ```cpp
+#define __LIST
 #include "fn.hpp"
 using namespace fn;
 
@@ -440,15 +445,19 @@ template <typename T> std::string tostr(const T& data     , const str_view& cfmt
 <!-- load tests/tostr.cpp fenced=cpp -->
 
 ```cpp
+#define __LIST
+#define __MAP
+#define __SET
 #include "fn.hpp"
+// #include "serial.hpp"
 using namespace fn;
 int main() {
 
     // modo função
-    tostr(5.6123, "%.2f")                     | WRITE(); // 5.61
-    tostr(std::vector<int> {1, 2, 3})         | WRITE(); // [1, 2, 3]
-    tostr(std::pair<int, int> {1, 2}, "%03d") | WRITE(); // (001, 002)
-    tostr("banana", "%-8s")                   | WRITE(); // banana  
+    5.6123 | TOSTR("%.2f")     | WRITE(); // 5.61
+    std::vector<int> {1, 2, 3} | JOIN(", ") | TOSTR("[%s]") | WRITE(); // [1, 2, 3]
+    std::pair<int, int> {1, 2} | JOIN(", ", "%03d") | TOSTR("[%s]") | WRITE(); // (001, 002)
+    "banana"s | TOSTR("%-8s")  | WRITE(); // banana  
 
     // números
     5.6123 | TOSTR("%.2f")     | WRITE(); // 5.61
@@ -458,14 +467,14 @@ int main() {
     "banana"  | TOSTR("<8")   | WRITE(); // banana  
     "banana"  | TOSTR(">8")   | WRITE(); //   banana
 
-    // containers
-    // a função write já chama a função tostr para não primitivos
-    std::vector<int> {1, 2, 3}         | WRITE(); // [1, 2, 3]
-    std::list<int> {1, 2, 3}           | WRITE(); // [1, 2, 3]
-    std::array<int, 3> {1, 2, 3}       | WRITE(); // [1, 2, 3]
+    // // containers
+    // // a função _write já chama a função TOSTR para não primitivos
+    // std::vector<int> {1, 2, 3}   | serial()      | WRITE(); // [1, 2, 3]
+    // std::list<int> {1, 2, 3}     | serial()      | WRITE(); // [1, 2, 3]
+    // std::array<int, 3> {1, 2, 3} | serial()      | WRITE(); // [1, 2, 3]
     
     // pair
-    std::pair<int, int> {1, 2}         | WRITE(); // (1, 2)
+    // std::pair<int, int> {1, 2}         | WRITE(); // (1, 2)
 
     // tuples
     // std::make_tuple(1, 5.42, "banana") | WRITE(); // (1, 5.42, banana)
@@ -473,9 +482,9 @@ int main() {
     // estruturas aninhadas
     std::make_pair(std::make_pair(4, "ovo"), "chiclete") | WRITE(); // ((4, ovo), chiclete)
 
-    //formatação recursiva
+    // formatação recursiva
     std::make_tuple(1, 2, 3) 
-        | TOSTR("%03d") 
+        | JOIN(", ", "%03d") 
         | WRITE(); // (001, 002, 003)
 
     std::make_pair(std::vector<int>{1,2,3}, std::vector<int>{4,5,6}) 
@@ -539,39 +548,38 @@ std::string format(std::string fmt, Args ...args)
 
 ```cpp
 #include "fn.hpp"
-using namespace fn;
 
 int main() {
 
-    format("O {} é {%0.2f} e o {} é {%0.4f}", "pi", 3.141592653, "e", 2.7182818) | WRITE(); 
+    fn::format("O {} é {%0.2f} e o {} é {%0.4f}", "pi", 3.141592653, "e", 2.7182818) | fn::WRITE(); 
     // O pi é 3.14 e o e é 2.7218
 
-    format("Meu vetor é {}", std::vector<int>{0,1,2,3,4,5,6,7,8,9}) | WRITE();
+    fn::format("Meu vetor é {}", std::vector<int>{0,1,2,3,4,5,6,7,8,9}) | fn::WRITE();
     // Meu vetor é [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-    format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | WRITE(); 
+    fn::format("Vetor com duas casas {%.2f}", std::vector<double>{1.1321, 2, 3.3}) | fn::WRITE(); 
     // Vetor com duas casas [1.13, 2.00, 3.30]
 
-    format("Alinhado a esquerda 10 casas [{<10}]", "abacate") | WRITE();
+    fn::format("Alinhado a esquerda 10 casas [{<10}]", "abacate") | fn::WRITE();
     // Alinhado a esquerda 10 casas [abacate   ]
 
-    format("Alinhado a direita 10 casas [{>10}]", "abacate") | WRITE(); 
+    fn::format("Alinhado a direita 10 casas [{>10}]", "abacate") | fn::WRITE(); 
     // Alinhado a direita 10 casas [   abacate]
 
-    "Contando de 1 a 10 {}"s | FORMAT(std::vector<int>{1,2,3,4,5,6,7,8,9,10}) | WRITE(); 
+    "Contando de 1 a 10 {}"s | fn::FORMAT(std::vector<int>{1,2,3,4,5,6,7,8,9,10}) | fn::WRITE(); 
     // Contando de 1 a 10 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     // Se faltar parametros ele coloca vazio
-    "{} {} tem {} anos" | FORMAT("jose"s, "luiz", 5) | WRITE(); 
+    "{} {} tem {} anos" | fn::FORMAT("jose"s, "luiz", 5) | fn::WRITE(); 
     // jose 5 tem  anos
 
-    "{}, eu {} {%02d} bananas {}." | FORMAT("Hoje", "comi", 5, "maduras") | WRITE(); 
+    "{}, eu {} {%02d} bananas {}." | fn::FORMAT("Hoje", "comi", 5, "maduras") | fn::WRITE(); 
     // Hoje, eu comi 05 bananas maduras.
 
-    "Eu ({<10}) {%02d} bananas{}" | FORMAT("comi"s, 5, '.') | WRITE(); 
+    "Eu ({<10}) {%02d} bananas{}" | fn::FORMAT("comi"s, 5, '.') | fn::WRITE(); 
     // Eu (comi      ) 05 bananas.
 
-    "Hoje eh dia {{{}}}" | FORMAT(5) | WRITE();
+    "Hoje eh dia {{{}}}" | fn::FORMAT(5) | fn::WRITE();
     // Hoje eh dia {5}
 }
 ```
@@ -653,6 +661,7 @@ std::string join(const T& container, const str_view& separator = "", const str_v
 <!-- load tests/join.cpp fenced=cpp -->
 
 ```cpp
+#define __LIST
 #include "fn.hpp"
 using namespace fn;
 
@@ -789,6 +798,8 @@ auto slice(const CONTAINER& container, int begin = 0)
 <!-- load tests/slice.cpp fenced=cpp -->
 
 ```cpp
+#define __MAP
+#define __LIST
 #include "fn.hpp"
 using namespace fn;
 
@@ -1200,12 +1211,12 @@ int main() {
     std::vector<int> a {1, 3, 2, 5};
 
     for (auto [i, x] : a | fn::ENUMERATE()) {
-        fn::print("{} {}\n", i, x);
+        fn::format("{} {}", i, x) | fn::WRITE();
     }
 
-    fn::write(fn::enumerate(a));  // [(0, 1), (1, 3), (2, 2), (3, 5)]
+    fn::enumerate(a) | fn::WRITE();  // [(0, 1), (1, 3), (2, 2), (3, 5)]
 
-    fn::write(fn::enumerate("banana"s)); // [(0, b), (1, a), (2, n), (3, a), (4, n), (5, a)]
+    "banana"s | fn::ENUMERATE() | fn::JOIN(", ") | fn::WRITE(); // [(0, b), (1, a), (2, n), (3, a), (4, n), (5, a)]
 
     std::vector<double> d = {1.2, 2.1, 5.3, 6.7, 9.34};
     d   | fn::ENUMERATE() 

@@ -16,21 +16,21 @@
 #include <iomanip>
 #include <vector>
 
-#ifdef ARRAY
+#ifdef __ARRAY
 #include <array>
 #endif
-#ifdef LIST
+#ifdef __LIST
 #include <list>
 #endif
-#ifdef SET
+#ifdef __SET
 #include <set>
 #include <unordered_set>
 #endif
-#ifdef MAP
+#ifdef __MAP
 #include <map>
 #include <unordered_map>
 #endif
-#ifdef MEMORY
+#ifdef __MEMORY
 #include <memory>
 #endif
 
@@ -314,21 +314,21 @@ template <typename T>             inline std::string __tostr(const T& t         
 template <typename A, typename B> inline std::string __tostr(const std::pair<A,B>& p         , const str_view& format) { return "(" + tostr(p.first, format) + ", " + tostr(p.second, format) + ")"; }
 template <typename ...Ts>         inline std::string __tostr(const std::tuple<Ts...>& t      , const str_view& format) { return "(" + join(t, ", ", format) + ")"; }
 template <typename T>             inline std::string __tostr(const std::vector<T>& t         , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
-#ifdef ARRAY
+#ifdef __ARRAY
 template <typename T, size_t N>   inline std::string __tostr(const std::array<T, N>& t       , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
 #endif
-#ifdef LIST
+#ifdef __LIST
 template <typename T>             inline std::string __tostr(const std::list<T>& t           , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
 #endif
-#ifdef SET
+#ifdef __SET
 template <typename T>             inline std::string __tostr(const std::set<T>& t            , const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
 template <typename T>             inline std::string __tostr(const std::unordered_set<T>& t  , const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
 #endif
-#ifdef MAP
+#ifdef __MAP
 template <typename K, typename T> inline std::string __tostr(const std::map<K,T>& t          , const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
 template <typename K, typename T> inline std::string __tostr(const std::unordered_map<K,T>& t, const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
 #endif
-#ifdef MEMORY
+#ifdef __MEMORY
 template <typename T>             inline std::string __tostr(const std::shared_ptr<T>& t     , const str_view& format) { return t == nullptr ? "null" : tostr(*t, format); }
 #endif
 
@@ -831,7 +831,7 @@ private:
         return aux;
     }
 
-#ifdef MAP
+#ifdef __MAP
     template <typename K, typename T>
     static auto new_vec_from(const std::map<K, T>& container) {
         auto fn = [](auto x) {return x;}; 
