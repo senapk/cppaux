@@ -11,18 +11,28 @@
 //--------------------------------------------------------
 
 #pragma once
-
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <array>
-#include <set>
-#include <map>
 #include <vector>
+
+#ifdef ARRAY
+#include <array>
+#endif
+#ifdef LIST
 #include <list>
-#include <unordered_map>
+#endif
+#ifdef SET
+#include <set>
 #include <unordered_set>
+#endif
+#ifdef MAP
+#include <map>
+#include <unordered_map>
+#endif
+#ifdef MEMORY
 #include <memory>
+#endif
 
 namespace fn {
 
@@ -302,15 +312,25 @@ template <typename T>             inline std::string __tostr(const T& t         
                                   inline std::string __tostr(const std::string& s            , const str_view& format) { return CFMT::format(s, format); }
                                   inline std::string __tostr(const str_view& s               , const str_view& format) { return CFMT::format(s, format); }
 template <typename A, typename B> inline std::string __tostr(const std::pair<A,B>& p         , const str_view& format) { return "(" + tostr(p.first, format) + ", " + tostr(p.second, format) + ")"; }
-template <typename T>             inline std::string __tostr(const std::list<T>& t           , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
-template <typename T>             inline std::string __tostr(const std::vector<T>& t         , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
 template <typename ...Ts>         inline std::string __tostr(const std::tuple<Ts...>& t      , const str_view& format) { return "(" + join(t, ", ", format) + ")"; }
+template <typename T>             inline std::string __tostr(const std::vector<T>& t         , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
+#ifdef ARRAY
 template <typename T, size_t N>   inline std::string __tostr(const std::array<T, N>& t       , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
+#endif
+#ifdef LIST
+template <typename T>             inline std::string __tostr(const std::list<T>& t           , const str_view& format) { return "[" + join(t, ", ", format) + "]"; }
+#endif
+#ifdef SET
 template <typename T>             inline std::string __tostr(const std::set<T>& t            , const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
-template <typename K, typename T> inline std::string __tostr(const std::map<K,T>& t          , const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
 template <typename T>             inline std::string __tostr(const std::unordered_set<T>& t  , const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
+#endif
+#ifdef MAP
+template <typename K, typename T> inline std::string __tostr(const std::map<K,T>& t          , const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
 template <typename K, typename T> inline std::string __tostr(const std::unordered_map<K,T>& t, const str_view& format) { return "{" + join(t, ", ", format) + "}"; }
+#endif
+#ifdef MEMORY
 template <typename T>             inline std::string __tostr(const std::shared_ptr<T>& t     , const str_view& format) { return t == nullptr ? "null" : tostr(*t, format); }
+#endif
 
 }
 
@@ -811,6 +831,7 @@ private:
         return aux;
     }
 
+#ifdef MAP
     template <typename K, typename T>
     static auto new_vec_from(const std::map<K, T>& container) {
         auto fn = [](auto x) {return x;}; 
@@ -824,6 +845,7 @@ private:
         std::vector<std::pair<decltype(fn(container.begin()->first)), decltype(fn(container.begin()->second))>> aux;
         return aux;
     }
+#endif
 };
 
 //__guide slice1
