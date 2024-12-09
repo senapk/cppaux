@@ -6,7 +6,7 @@
 //         MAP, FILTER, SLICE, ENUMERATE
 //     EM MODO FUNÇÃO E MODO PIPELINE
 //--------------------------------------------------------
-//  VERSÃO 1.0.0
+//  VERSÃO 2.0.0
 //  https://github.com/senapk/cppaux
 //--------------------------------------------------------
 
